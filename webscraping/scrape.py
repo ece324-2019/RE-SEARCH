@@ -14,7 +14,8 @@ url = "https://www.prettylittlething.us/catalogsearch/result/?q=turtle+neck+top&
 url = "https://www.riverisland.com/search?keyword=turtle%20neck%20top&search-submit=&f-division=women"
 url = "https://lulus.com"
 url = "https://www.macys.com/shop/featured/turtle-neck-top/Pageindex/3"#/Productsperpage/120"
-result = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+url = "https://www.lulus.com/searchresults?pp=120&q=turtle%20neck%20top&search_in_description=1"
+result = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'})
 print(result.status_code)
 
 if result.status_code == 200:
@@ -81,13 +82,22 @@ urls = []
 #         print(img)
 # print(len(pics))
 """ MACYS """
-pics = []
-imgs = soup.findAll('img',{'class':'thumbnailImage'})
+# pics = []
+# imgs = soup.findAll('img',{'class':'thumbnailImage'})
+# for img in imgs:
+#     try:
+#         a = img['src']
+#         print(a)
+#         pics += [a]
+#     except:
+#         print(img)
+# print(len(pics))
+""" LULUS """
+urls = []
+imgs = soup.findAll('img',{'class':'products-grid__image-link-img plp-image js-plp-image js-plp-lazy-img'})
 for img in imgs:
+    # print(img)
     try:
-        a = img['src']
-        print(a)
-        pics += [a]
+        urls += [img['data-src']]
     except:
-        print(img)
-print(len(pics))
+        pass

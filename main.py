@@ -1,27 +1,17 @@
 import argparse
 import numpy as np
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.model_selection import train_test_split
 import torch
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from model import cnn
 import torchvision
 import torchvision.transforms as transforms
-from PIL import Image
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from scipy.signal import savgol_filter as sf
-import time
 import torch.utils.data as data
-from sklearn.metrics import confusion_matrix
 
-from PIL import Image
-import os, sys
-# torch.manual_seed(2)
+torch.manual_seed(2)
 """ Type of classifier """
 """ 1) args.type = color """
 """ 2) args.type = buttons """
@@ -30,6 +20,9 @@ import os, sys
 
 """ Testing case: black, white, orange """
 """ import photos with correct labels """
+
+data_folder = './sleeves'
+
 def get_mean_std(dataloader):
     mean = []
     std = []
@@ -41,25 +34,34 @@ def get_mean_std(dataloader):
     return np.mean(mean),np.mean(std)
 
 def fetch():
-    dataset = torchvision.datasets.ImageFolder(root='./test_data_2', transform=transforms.Compose(
+    dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
         [transforms.ToTensor()]))
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=257)
+    h={}
+    for img in dataset.imgs:
+        if img[1] in h:
+            h[img[1]] += 1
+        else:
+            h[img[1]] = 1
+    # print(h)
+    data_length= len(dataset)
+    # print(data_length)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=data_length)
     mean, std = get_mean_std(dataloader)
     print("Original mean:", mean)
     print("Original std:", std)
 
-    dataset = torchvision.datasets.ImageFolder(root='./test_data_2', transform=transforms.Compose(
+    dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize(mean=(mean, mean, mean), std=(std, std, std))]))
     dataloader = DataLoader(dataset, shuffle=False, batch_size=1)
     mean, std = get_mean_std(dataloader)
     print("Calibrated mean:", mean)
     print("Calibrated std:", std)
 
-    return dataloader
+    return dataloader, h
 
 def get_num(n):
-    num_train = int(n * 0.75)
-    num_valid = int(n * 0.15)
+    num_train = int(n * 0.80)
+    num_valid = int(n * 0.10)
     num_test =n - num_train - num_valid
     return num_train, num_valid, num_test
 
@@ -85,7 +87,7 @@ def split(dataloader,labels):
         stats += [[0,0,0]]
 
     for i in range(0,len(labels)):
-        num[i][0],num[i][1],num[i][2] = get_num(labels[i][1])
+        num[i][0],num[i][1],num[i][2] = get_num(labels[i])
 
     num_train = 0
     num_valid = 0
@@ -95,12 +97,7 @@ def split(dataloader,labels):
         num_valid += num[i][1]
         num_test += num[i][2]
 
-    train_data = []
-    train_labels = []
-    valid_data = []
-    valid_labels = []
-    test_data = []
-    test_labels = []
+    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = [], [], [], [], [], []
 
     for i, data in enumerate(dataloader):
         inputs, label = data
@@ -119,45 +116,43 @@ def split(dataloader,labels):
             test_data += [inputs.data[0]]
             test_labels += [label.data[0]]
         else:
-            print(j)
-            print(stats[j])
-            print(num[j])
+            print("ERROR: INPUT AND LABELS SIZE MISMATCH")
 
-
-    print("\nInput Labels:")
-    print(labels)
-
-    print('\n# Train Data: ', num_train, len(train_data))
-    print("# Train Labels: ",num_train, len(train_labels))
-    print("# Validation Data:",num_valid, len(valid_data))
-    print('# Validation Labels: ', num_valid,len(valid_labels))
-    print("# Test Data: ", num_test,len(test_data))
-    print("# Test Labels:", num_test,len(test_labels),'\n')
     return train_data,train_labels,valid_data,valid_labels,test_data,test_labels
 
-def blah(args):
-    user_labels = [['black', 109], ['orange', 27], ['white', 121]]
+def eval(model, loader, loss_fnc, optimizer= None, train=False):
+    running_loss = []
+    curr_acc = []
+    for i, data in enumerate(loader):
+        inputs, labels = data
+        one_hot_labels = F.one_hot(labels, args.num_classes).float()
+        if args.loss_function == "MSE":
+            labels = one_hot_labels
+        if train:
+            optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = loss_fnc(outputs, labels)
+        if train:
+            loss.backward()
+            optimizer.step()
+        stats = [0, 0]
+        for i in range(0, outputs.size()[0]):
 
-    dataloader = fetch()
-    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, user_labels)
+            if np.argmax(outputs[i].detach().numpy()) == np.argmax(one_hot_labels[i].detach().numpy()):
+                stats[0] += 1
+            else:
+                stats[1] += 1
+        curr_acc += [stats[0] / len(outputs)]
+        running_loss += [loss.item()]
+    acc = np.mean(np.array(curr_acc))
+    loss = np.mean(np.array(running_loss))
+    return acc, loss
 
-    print("Mean of training data:", np.mean([train_data[i].mean().item() for i in range(len(train_data))]))
-    print("Standard Deviation of training data:", np.mean([train_data[i].std().item() for i in range(len(train_data))]))
-
-    training_set = ImageDataset(train_data, train_labels)
-    validation_set = ImageDataset(valid_data, valid_labels)
-    test_set = ImageDataset(valid_data, valid_labels)
-    trainloader = DataLoader(training_set, shuffle=True, batch_size=args.batch_size)
-    validloader = DataLoader(validation_set, shuffle=True, batch_size=len(valid_labels))
-    testloader = DataLoader(validation_set, shuffle=True, batch_size=len(test_labels))
-    classes = np.array([0, 1, 2])
-    return
 
 def main(args):
-    user_labels = [['black', 102], ['blue',53],['green', 55], ['orange', 38],['red', 55], ['white', 82],['yellow',60]]
 
-    dataloader = fetch()
-    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, user_labels)
+    dataloader, h = fetch()
+    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, h)
 
     print("Mean of training data:", np.mean([train_data[i].mean().item() for i in range(len(train_data))]))
     print("Standard Deviation of training data:", np.mean([train_data[i].std().item() for i in range(len(train_data))]))
@@ -169,112 +164,44 @@ def main(args):
     validloader = DataLoader(validation_set, shuffle=True, batch_size=len(valid_labels))
     testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
 
-    net = cnn()
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(net.parameters(), lr=args.lr)
-
-    train_acc = []
-    train_loss = []
-    num_epoch = []
-    valid_loss = []
-    valid_acc = []
+    model = cnn(args.num_classes)
+    if args.loss_function == "CE":
+        loss_fnc = nn.CrossEntropyLoss()
+    elif args.loss_function == "MSE":
+        loss_fnc = nn.MSELoss()
+    optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
+    
+    train_acc, train_loss, valid_loss, valid_acc = [], [], [], []
     for epoch in range(args.epochs):
-        running_loss = []
-        curr_acc = []
-        print("\nEpoch:", epoch)
+        t_acc, t_loss = eval(model=model, loss_fnc=loss_fnc, optimizer=optimizer, loader=trainloader, train=True)
+        train_acc += [t_acc]
+        train_loss += [t_loss]
+        v_acc, v_loss = eval(model=model, loss_fnc=loss_fnc, loader=validloader)
+        valid_loss += [v_loss]
+        valid_acc += [v_acc]
+        print("Epoch",epoch,"Train Acc:", round(t_acc,3), "Valid Acc:",round(v_acc,3),"Train Loss", round(t_loss,3) , "Valid Loss:",round(v_loss,3))
 
-        for i, data in enumerate(trainloader):
-            inputs, labels = data
-            one_hot_labels = F.one_hot(labels, 10).float()
-            optimizer.zero_grad()
-            outputs = net(inputs)
+    print('\nFinal Train Accuracy: ', train_acc[-1])
+    print('Final Train Loss: ', train_loss[-1])
+    print('\nFinal Validation Accuracy: ', v_acc)
+    print('Final Validation Loss: ', v_loss)
 
-            loss = criterion(outputs, one_hot_labels)
-            loss.backward()
-            optimizer.step()
-
-            stats = [0, 0]
-            for i in range(0, outputs.size()[0]):
-
-                if np.argmax(outputs[i].detach().numpy()) == np.argmax(one_hot_labels[i].detach().numpy()):
-                    stats[0] += 1
-                else:
-                    stats[1] += 1
-
-            curr_acc += [stats[0] / outputs.size()[0]]
-            running_loss += [loss.item()]
-        num_epoch += [epoch]
-        train_acc += [np.mean(np.array(curr_acc))]
-        train_loss += [np.mean(np.array(running_loss))]
-
-        print('Train Accuracy: ', np.mean(np.array(curr_acc)))
-        print('Train Loss: ', np.mean(np.array(running_loss)))
-
-        running_loss = []
-        curr_acc = []
-        for i, data in enumerate(validloader):
-            inputs, labels = data
-            one_hot_labels = F.one_hot(labels, 10).float()
-            outputs = net(inputs)
-            loss = criterion(outputs, one_hot_labels)
-            loss.backward()
-            optimizer.step()
-
-            stats = [0, 0]
-            for i in range(0, outputs.size()[0]):
-
-                if np.argmax(outputs[i].detach().numpy()) == np.argmax(one_hot_labels[i].detach().numpy()):
-                    stats[0] += 1
-                else:
-                    stats[1] += 1
-            curr_acc += [stats[0] / len(outputs)]
-            running_loss += [loss.item()]
-        valid_acc += [np.mean(np.array(curr_acc))]
-        valid_loss += [np.mean(np.array(running_loss))]
-        print('Validation Accuracy: ', np.mean(np.array(curr_acc)))
-        print('Validation Loss: ', np.mean(np.array(running_loss)))
-
-    print('\nFinal Train Accuracy: ', train_acc[len(train_acc) - 1])
-    print('Final Train Loss: ', train_loss[len(train_loss) - 1])
-    print('\nFinal Validation Accuracy: ', np.mean(np.array(curr_acc)))
-    print('Final Validation Loss: ', np.mean(np.array(running_loss)))
-
-    curr_acc = []
-    running_loss = []
-
-    for i, data in enumerate(testloader):
-        inputs,labels = data
-        one_hot_labels = F.one_hot(labels, 10).float()
-        outputs = net(inputs)
-        loss = criterion(outputs, one_hot_labels)
-        loss.backward()
-        optimizer.step()
-
-        stats = [0, 0]
-        for i in range(0, outputs.size()[0]):
-            if np.argmax(outputs[i].detach().numpy()) == np.argmax(one_hot_labels[i].detach().numpy()):
-                stats[0] += 1
-            else:
-                stats[1] += 1
-        curr_acc += [stats[0] / len(outputs)]
-        running_loss += [loss.item()]
-    test_acc = np.mean(np.array(curr_acc))
-    test_loss = np.mean(np.array(running_loss))
+    test_acc, test_loss = eval(model=model, loss_fnc=loss_fnc, loader=testloader)
     print('\nTest Accuracy: ', test_acc)
     print('Test Loss: ', test_loss)
 
     print("\nFinished Training")
 
-    plt.plot(num_epoch, train_acc, label='Training Accuracy')
-    plt.plot(num_epoch, valid_acc, label='Validation Accuracy')
+    plt.plot(range(train_acc), train_acc, label='Training Accuracy')
+    plt.plot(range(valid_acc), valid_acc, label='Validation Accuracy')
     plt.title('Training and Validation Accuracy vs. Epoch')
     plt.xlabel('# Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
 
-    plt.plot(num_epoch, train_loss, label='Training Loss')
-    plt.plot(num_epoch, valid_loss, label='Validation Loss')
+    plt.plot(range(train_loss), train_loss, label='Training Loss')
+    plt.plot(range(valid_loss), valid_loss, label='Validation Loss')
     plt.title('Training and Validation Loss vs. Epoch')
     plt.xlabel('# Epoch')
     plt.ylabel('Loss')
@@ -283,17 +210,11 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch-size', type=int, default=64)
+    parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--model', type=str, default='cnn',
-                        help="Model type: baseline,rnn,cnn (Default: baseline)")
-    parser.add_argument('--emb-dim', type=int, default=100)
-    parser.add_argument('--rnn-hidden-dim', type=int, default=100)
-    parser.add_argument('--num-filt', type=int, default=50)
-    parser.add_argument('--num_kern', type=int, default=30)
-    parser.add_argument('--nf', type=int, default=16)
-    parser.add_argument('--type', type=str, default='NA')
+    parser.add_argument('--num_classes', type=str, default=3)
+    parser.add_argument('--loss_function', type=str, default='CE')
 
     args = parser.parse_args()
 
