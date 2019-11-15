@@ -9,6 +9,7 @@ combos = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['
 # os.mkdir('./data/boohoo')
 combos = [["top","with","buttons"],["top"]]
 combos = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
+combos = [['green','top'],['blue','top']]
 
 urls = []
 for comb in combos:

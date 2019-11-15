@@ -6,7 +6,7 @@ store = 'riverisland'
 combos = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
 combos = [["top","with","buttons"]]
 combos = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
-
+combos = [['orange','top'],['yellow','top']]
 
 # os.mkdir(f'./data/{store}')
 urls = []

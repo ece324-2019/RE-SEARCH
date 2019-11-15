@@ -15,7 +15,7 @@ num_tops = 300
 # search_terms = [["top","with","buttons"]]
 search_terms = [['turtleneck', 'top'], ['v-neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
 """*****************"""
-
+search_terms = [['red','top']]
 pages = (num_tops-1)//num_per_page + 1
 
 if scroll == False:

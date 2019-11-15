@@ -8,7 +8,7 @@ combos = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['
 # combos = [['round','neck','top']]
 # combos = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
 # combos = [["top","with","buttons"],["top"],["black","top"],["white","top"],["yellow","top"],["green","top"],["orange","top"],["blue","top"],["red","top"]]
-#
+combos = [['yellow','top']]
 # os.mkdir(f'./data/{store}')
 urls = []
 for comb in combos:
@@ -34,7 +34,7 @@ for perm in urls:
     url = perm[0]
     fname = perm[1]
     stop = perm[2]
-    for k in range(1,10):
+    for k in range(1,2):
         url = url[:-1]+ str(k)
         print(url)
         print('search:', fname)

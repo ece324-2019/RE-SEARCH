@@ -2,10 +2,10 @@ import os
 import urllib.request
 import requests
 from bs4 import BeautifulSoup
-store = 'PLT'
+store = 'prettylittlethings'
 combos = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
 combos = [["top","with","buttons"]]
-
+combos = [['blue','top']]
 # os.mkdir(f'./data/{store}')
 urls = []
 for comb in combos:

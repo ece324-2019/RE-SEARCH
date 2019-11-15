@@ -1,8 +1,9 @@
 import argparse
 import numpy as np
 import torch
+import scipy.signal as ss
 from torch.utils.data import DataLoader
-from model import cnn
+from model import *
 import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
@@ -10,6 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
+from torchsummary import summary
 
 torch.manual_seed(2)
 """ Type of classifier """
@@ -20,8 +22,6 @@ torch.manual_seed(2)
 
 """ Testing case: black, white, orange """
 """ import photos with correct labels """
-
-data_folder = './sleeves'
 
 def get_mean_std(dataloader):
     mean = []
@@ -128,7 +128,9 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False):
         one_hot_labels = F.one_hot(labels, args.num_classes).float()
         if args.loss_function == "MSE":
             labels = one_hot_labels
+        model.eval()
         if train:
+            model.train()
             optimizer.zero_grad()
         outputs = model(inputs)
         loss = loss_fnc(outputs, labels)
@@ -164,13 +166,17 @@ def main(args):
     validloader = DataLoader(validation_set, shuffle=True, batch_size=len(valid_labels))
     testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
 
-    model = cnn(args.num_classes)
+    model = baseline(args.num_classes)
+    if args.model == 'cnn':
+        model = cnn(args.num_classes)
+        print("summary", summary(model, (3,100,100)))
+
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
     elif args.loss_function == "MSE":
         loss_fnc = nn.MSELoss()
     optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
-    
+
     train_acc, train_loss, valid_loss, valid_acc = [], [], [], []
     for epoch in range(args.epochs):
         t_acc, t_loss = eval(model=model, loss_fnc=loss_fnc, optimizer=optimizer, loader=trainloader, train=True)
@@ -185,23 +191,26 @@ def main(args):
     print('Final Train Loss: ', train_loss[-1])
     print('\nFinal Validation Accuracy: ', v_acc)
     print('Final Validation Loss: ', v_loss)
-
-    test_acc, test_loss = eval(model=model, loss_fnc=loss_fnc, loader=testloader)
-    print('\nTest Accuracy: ', test_acc)
-    print('Test Loss: ', test_loss)
+    try:
+        test_acc, test_loss = eval(model=model, loss_fnc=loss_fnc, loader=testloader)
+        print('\nTest Accuracy: ', test_acc)
+        print('Test Loss: ', test_loss)
+    except:
+        pass
 
     print("\nFinished Training")
-
-    plt.plot(range(train_acc), train_acc, label='Training Accuracy')
-    plt.plot(range(valid_acc), valid_acc, label='Validation Accuracy')
+    train_acc = ss.savgol_filter(train_acc, 15, 2)
+    valid_acc = ss.savgol_filter(valid_acc, 15, 2)
+    plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
+    plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
     plt.title('Training and Validation Accuracy vs. Epoch')
     plt.xlabel('# Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
 
-    plt.plot(range(train_loss), train_loss, label='Training Loss')
-    plt.plot(range(valid_loss), valid_loss, label='Validation Loss')
+    plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
+    plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
     plt.title('Training and Validation Loss vs. Epoch')
     plt.xlabel('# Epoch')
     plt.ylabel('Loss')
@@ -212,10 +221,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--num_classes', type=str, default=3)
-    parser.add_argument('--loss_function', type=str, default='CE')
-
+    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--type', type=str, default='sleeves')
+    parser.add_argument('--loss_function', type=str, default='MSE')
+    parser.add_argument('--model', type=str, default='cnn')
     args = parser.parse_args()
+    data_folder = './data-13/necklines'
+    if args.type == 'colors':
+        args.num_classes = 7
+    elif args.type == 'sleeves':
+        args.num_classes = 3
+    elif args.type == 'necklines':
+        args.num_classes = 5
 
     main(args)

@@ -4,7 +4,7 @@ import glob
 
 root='./webscraping/data'
 combos = ['long sleeve top', 'short sleeve top', 'sleeveless top']
-# combos = ['black top', 'blue top', 'green top', 'orange top', 'red top', 'yellow','white']
+combos = ['black top', 'blue top', 'green top', 'orange top', 'red top', 'yellow top','white top']
 # combos = ['top with buttons', 'top']
 # combos = ['collared top','v neck top','crew neck top','square neck top','turtle neck top','scoop neck top']
 
@@ -19,6 +19,14 @@ h = {'long sleeve top':0,
 #      'square neck top':0,
 #      'turtle neck top':0,
 #      'scoop neck top':0}
+h={'black top':0,
+   'blue top':0,
+   'green top':0,
+   'orange top':0,
+    'red top':0,
+   'yellow top':0,
+   'white top':0
+}
 
 # print(h['sleeveless top'])
 for store in stores:
