@@ -6,21 +6,21 @@ from bs4 import BeautifulSoup
 import os
 
 """ INPUT PARAMETERS """
-store = 'next2'
+store = 'Next'
 concat = "%20"
 
 scroll = True
-num_tops = 600
+num_tops = 380
 per_page= 24
-# search_terms = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
-search_terms = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
-
+#search_terms = [["top","with","buttons"],["top"],["black","top"],["white","top"],["yellow","top"],["green","top"],["orange","top"],["blue","top"],["red","top"]]
+search_terms = [["button",'top']]
 """*****************"""
 if scroll == False:
     pages = 1
 else:
     pages = num_tops//per_page + 1
 print('# Pages: ',pages)
+
 #"https://www.tobi.com/ca/search?page=2&search_term="
 #https://www.tobi.com/ca/search?search_term=top%20women
 
@@ -33,10 +33,10 @@ else:
     url_base = "https://www3.next.co.uk/search?w="
     add = "&isort=score&af=&"
 
-if os.path.exists('./data/'+store):
+if os.path.exists('./scraped/'+store):
     pass
 else:
-    os.mkdir('./data/'+store)
+    os.mkdir('./scraped/'+store)
 
 print('Store: ',store)
 url = []
@@ -87,7 +87,7 @@ for i in range(0,len(url)):
             pass
 
 
-    path = './data/' + store + '/' + label
+    path = './scraped/' + store + '/' + label
     print('Path: ',path)
 
     if os.path.exists(path):
@@ -97,5 +97,5 @@ for i in range(0,len(url)):
 
     curr_page = i%pages
     for n, data in enumerate(img_urls):
-        urllib.request.urlretrieve(data,f"{path}/{n+curr_page*95}.jpg")
+        urllib.request.urlretrieve(data,f"{path}/{n+curr_page*per_page}.jpg")
 

@@ -5,12 +5,13 @@ import os
 
 """ INPUT PARAMETERS """
 store = 'Tobi'
-folder_name = 'data'
+folder_name = 'scraped'
 
+per_page =
 scroll = True
-num_tops = 300
-search_terms = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
+num_tops = 100
 
+search_terms = [["top","with","buttons"],["top"],["black","top"],["white","top"],["yellow","top"],["green","top"],["orange","top"],["blue","top"],["red","top"],["pattern","top"]]
 """*****************"""
 
 pages = num_tops//95 + 1
@@ -60,7 +61,7 @@ for i in range(0,len(url)):
 
     print('\nLooking for (',label,')')
     result = requests.get(url[i], headers={'User-Agent': 'Mozilla/5.0'})
-    # print('Status code:',result.status_code)
+    print('Status code:',result.status_code)
     if result.status_code == 200:
         soup = BeautifulSoup(result.content, "html.parser")
 
@@ -75,7 +76,7 @@ for i in range(0,len(url)):
 
 
     path = './'+folder_name +'/' + store + '/' + label
-    # print('Path: ',path)
+    print('Path: ',path)
 
     if os.path.exists(path):
         pass

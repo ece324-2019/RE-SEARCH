@@ -6,18 +6,15 @@ import os
 import numpy as np
 
 """ INPUT PARAMETERS """
-store = 'revolve'
-folder_name = 'data'
+store = 'Revolve'
+folder_name = 'scraped'
 user = 'yanisa'
 
-num_desired = 300
-search_terms = [['turtle','neck', 'top'], ['v', 'neck', 'top'], ['collared', 'top'], ['crew', 'neck', 'top'],
-                ['square', 'neck', 'top'], ['scoop', 'neck', 'top']]
+num_desired = 600
+search_terms = [['button','top']]
 """*****************"""
-search_terms = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
 
-
-pages = num_desired//87 + 1
+pages = 5
 
 if user != 'yanisa':
     search_terms = [["red"], ['black'], ['white'], ['yellow'], ['orange'], ['blue'], ['green'], ['buttons'],['no buttons']]
@@ -41,24 +38,24 @@ if user == 'yanisa':
         temp = 'https://www.revolve.com/r/Search.jsp?search='
         for j in range(0,len(search_terms[i])-1):
             temp = temp + search_terms[i][j] + '+'
-        url +=[temp + '&d=Womens']
+        url +=[temp + search_terms[i][j+1] + '&d=Womens']
         print('# ', i, ': ', url[len(url) - 1])
         for k in range(2,pages+1):
             url += [temp + '&d=Womens&pageNum=' + str(k)]
             print('# ', i, ': ', url[len(url) - 1])
 else:
-    for i in range(0,len(colors)):
-        for j in range(1,pages+1):
-            if j == 1:
-                url += ['https://www.revolve.com/tops/br/db773d/?searchsynonym=' + colors[i] + '+top&color%5B%5D=' + colors[i]]
-            else:
-                url += [color_url_base + colors[i] + in_between + str(j) + add + colors[i]]
-            print('# ',i, ': ', url[len(url)-1])
+    # for i in range(0,len(colors)):
+    #     for j in range(1,pages+1):
+    #         if j == 1:
+    #             url += ['https://www.revolve.com/tops/br/db773d/?searchsynonym=' + colors[i] + '+top&color%5B%5D=' + colors[i]]
+    #         else:
+    #             url += [color_url_base + colors[i] + in_between + str(j) + add + colors[i]]
+    #         print('# ',i, ': ', url[len(url)-1])
     for j in range(1,pages+1):
         if j == 1:
-            url += ['https://www.revolve.com/r/Search.jsp?search=tops+with+buttons&d=Womens']
+            url += ['https://www.revolve.com/r/Search.jsp?search=button+top&d=Womens']
         else:
-            url += ['https://www.revolve.com/r/Search.jsp?search=tops+with+buttons&d=Womens&pageNum=' + str(j)]
+            url += ['https://www.revolve.com/r/Search.jsp?search=button+top&d=Womens&pageNum=' + str(j)]
         print('# ', i+1, ': ', url[len(url) - 1])
     for j in range(1,pages+1):
         url += ['https://www.revolve.com/tops/br/db773d/?searchsynonym=tops&pageNum=' + str(j)]
@@ -98,11 +95,12 @@ for i in range(0,len(url)):
     else:
         os.mkdir(path)
 
+    # print(num_in_page)
     temp = i//pages+1
     for n, data in enumerate(img_urls):
 
-        print('# ', (n+sum(num_in_page[0:i+1]))/temp, data)
+        print('# ', n+sum(num_in_page[0:i+1]), data)
         try:
-            urllib.request.urlretrieve(data,f"{path}/{(n+sum(num_in_page[0:i+1]))/temp}.jpg")
+            urllib.request.urlretrieve(data,f"{path}/{n+sum(num_in_page[0:i+1])}.jpg")
         except:
             pass
