@@ -15,7 +15,7 @@ num_tops = 300
 search_terms = [['long','sleeve']]
 #,["top"],["black","top"],["white","top"],["yellow","top"],["green","top"],["orange","top"],["blue","top"],["red","top"],["pattern","top"]]
 """*****************"""
-
+search_terms = [['red','top']]
 pages = (num_tops-1)//num_per_page + 1
 
 if scroll == False:

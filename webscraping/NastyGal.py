@@ -6,19 +6,19 @@ import os
 import numpy as np
 
 """ INPUT PARAMETERS """
-store = 'NastyGal'
-folder_name = 'scraped'
-user = 'annie'
+store = 'nastygal'
+folder_name = 'data'
+user = 'yanisa'
 
-num_desired = 600
-search_terms = [['long','sleeve','top']]
+num_desired = 300
+search_terms = [['yellow','top']]
 """*****************"""
 
 pages = 20
 
 if user != 'yanisa':
     #search_terms = [["red"], ['black'], ['white'], ['yellow'], ['orange'], ['blue'], ['green'], ['buttons'],['no buttons']]
-    search_terms = [["orange", "top"]]
+    search_terms = [["yellow", "top"]]
         #[["black", "top"], ["white", "top"], ["yellow", "top"], ["green", "top"],["orange", "top"], ["blue", "top"], ["red", "top"]]
 
 if os.path.exists('./'+folder_name +'/'+store):

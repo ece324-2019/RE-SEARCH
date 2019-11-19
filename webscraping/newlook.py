@@ -6,6 +6,7 @@ store = 'newlook'
 combos = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
 combos = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
 combos = [["top","with","buttons"]]
+combos = [['orange','top']]
 
 # os.mkdir(f'./data/{store}')
 urls = []

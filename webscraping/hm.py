@@ -2,11 +2,11 @@ import os
 import urllib.request
 import requests
 from bs4 import BeautifulSoup
-store = 'riverisland'
+store = 'hm'
 combos = [['turtle', 'neck', 'top'], ['v', 'neck', 'top'],['collared', 'top'],['crew', 'neck', 'top'],['square','neck','top'], ['scoop','neck','top']]
-combos = [["top","with","buttons"]]
-combos = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
-
+combos = [['round','neck','top']]
+# combos = [['long','sleeve','top'],['short','sleeve','top'],['sleeveless','top']]
+combos = [["white","top"],["yellow","top"],["green","top"],["orange","top"],["blue","top"],["red","top"]]
 
 # os.mkdir(f'./data/{store}')
 urls = []
@@ -16,17 +16,17 @@ for comb in combos:
     path = f'./data/{store}/'+ fname
     if not os.path.exists(path):
         os.mkdir(path)
-    url = "https://www.riverisland.com/search?keyword="
+    url = "https://www2.hm.com/en_ca/search-results.html?q="
 
     for c in comb:
-        url += c + "%20"
-    urls += [[url[:-3] + "&search-submit=&f-division=women&pg=0", fname]]
+        url += c + "+"
+    urls += [[url[:-1] + "&page-size=200", fname]]
 
 for perm in urls:
     url = perm[0]
     fname = perm[1]
-    for k in range(1,3):
-        url = url[:-1]+ str(k)
+    for k in range(1,2):
+        # url = url[:-1]+ str(k)
         print(url)
         print('search:', fname)
         result = requests.get(url+'#1_0',headers={'User-Agent': 'Mozilla/5.0'})
@@ -34,15 +34,21 @@ for perm in urls:
             soup = BeautifulSoup(result.content, "html.parser")
 
         pics = []
-        imgs = soup.findAll('img', {'data-qa': 'product-image'})
+        imgs = soup.findAll('img', {'class': 'item-image'})
         for img in imgs:
+            # print(img)
             try:
-                a = img['src']
-                # print(a)
-                pics += [a]
+                pics += ['https:' + img['src']]
             except:
-                continue
-                # print(img)
+                pass
+            try:
+                pics += ['https:' + img['data-altimage']]
+            except:
+                pass
+            # try:
+            #     pics += ['https:' + img['data-src']]
+            # except:
+            #     pass
 
         print(len(pics))
         for i, u in enumerate(pics):
