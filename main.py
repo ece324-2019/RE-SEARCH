@@ -140,7 +140,7 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False, epoch = 0):
             model.eval()
         outputs = model(inputs,args.batch_norm, args.loss_function)
         if args.loss_function == "CE":
-            outputs = torch.softmax(outputs)
+            outputs = torch.softmax(outputs, dim=1)
         loss = loss_fnc(outputs, labels)
         if train:
             loss.backward()
@@ -229,13 +229,13 @@ def main(args):
     plt.show()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()  
+    parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_norm', type=bool, default=True)
     parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--type', type=str, default='necklines')
-    parser.add_argument('--loss_function', type=str, default='MSE')
+    parser.add_argument('--loss_function', type=str, default='CE')
     parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--dropout', type=float, default=0.1)
     args = parser.parse_args()
