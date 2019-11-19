@@ -123,7 +123,7 @@ def split(dataloader,labels):
 
     return train_data,train_labels,valid_data,valid_labels,test_data,test_labels
 
-def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
+def eval(model, loader, loss_fnc, optimizer= None, train=False, cfm=False):
     running_loss = []
     curr_acc = []
     for i, data in enumerate(loader):
@@ -138,9 +138,7 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
             optimizer.zero_grad()
         else:
             model.eval()
-        outputs = model(inputs,args.batch_norm, args.loss_function)
-        if args.loss_function == "CE":
-            outputs = torch.softmax(outputs, dim=1)
+        outputs = model(inputs,args.batch_norm)
         loss = loss_fnc(outputs, labels)
         if train:
             loss.backward()
@@ -155,13 +153,14 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
                 stats[1] += 1
         curr_acc += [stats[0] / len(outputs)]
         running_loss += [loss.item()]
-        if cfm == True:
-            print(args.class_names)
-            print(confusion_matrix(y_true=old_labels.detach().numpy(), y_pred=output_labels, labels=args.classes))
+    if cfm == True:
+        print(args.class_names)
+        print(confusion_matrix(y_true= old_labels.detach().numpy(), y_pred=output_labels, labels=args.classes))
 
     acc = np.mean(np.array(curr_acc))
     loss = np.mean(np.array(running_loss))
     return acc, loss
+
 
 def main(args):
 
@@ -182,7 +181,6 @@ def main(args):
     # print("summary", summary(model, (3, 100, 100)))
     if args.model == 'cnn':
         model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
-
         # print("summary", summary(model, (3,100,100)))
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
@@ -219,8 +217,8 @@ def main(args):
 
     print("\nFinished Training")
 
-    # train_acc = ss.savgol_filter(train_acc, 17, 1)
-    # valid_acc = ss.savgol_filter(valid_acc, 17, 1)
+    train_acc = ss.savgol_filter(train_acc, 17, 1)
+    valid_acc = ss.savgol_filter(valid_acc, 17, 1)
     plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
     plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
     plt.title('Training and Validation Accuracy vs. Epoch')
@@ -229,8 +227,8 @@ def main(args):
     plt.legend()
     plt.show()
 
-    # train_loss = ss.savgol_filter(train_loss, 17, 1)
-    # valid_loss = ss.savgol_filter(valid_loss, 17, 1)
+    train_loss = ss.savgol_filter(train_loss, 17, 1)
+    valid_loss = ss.savgol_filter(valid_loss, 17, 1)
     plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
     plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
     plt.title('Training and Validation Loss vs. Epoch')
@@ -242,34 +240,33 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=64)
-
-    parser.add_argument('--lr', type=float, default=0.007)
+    parser.add_argument('--lr', type=float, default=0.005)
     parser.add_argument('--batch_norm', type=bool, default=True)
-    parser.add_argument('--epochs', type=int, default=3)
+    parser.add_argument('--epochs', type=int, default=2)
     parser.add_argument('--type', type=str, default='colors')
     parser.add_argument('--loss_function', type=str, default='MSE')
     parser.add_argument('--model', type=str, default='cnn')
-    parser.add_argument('--dropout', type=float, default=0.12)
-
+    parser.add_argument('--dropout', type=float, default=0.15)
     args = parser.parse_args()
+
     print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
     data_folder = '../colors'
     if args.type == 'colors':
-        args.class_names = ["black", "blue", "green", "orange", "red", "white", "yellow"]
+        args.class_names = ["black","blue","green","orange","red","white","yellow"]
         args.num_classes = 7
-        args.classes = np.array([0, 1, 2, 3, 4, 5, 6])
+        args.classes = np.array([0,1,2,3,4,5,6])
     elif args.type == 'sleeves':
-        args.class_names = ["long", "short", "sleeveless"]
+        args.class_names = ["long","short","sleeveless"]
         args.num_classes = 3
         args.classes = np.array([0, 1, 2, 3, 4, 5, 6])
     elif args.type == 'necklines':
-        args.class_names = ["collar", "crew", "square", "turtle", "v-neck"]
+        args.class_names = ["collar","crew","square","turtle","v-neck"]
         args.num_classes = 5
         args.classes = np.array([0, 1, 2, 3, 4, 5, 6])
     elif args.type == 'buttons':
-        args.class_names = ["button", "no button"]
+        args.class_names = ["button","no button"]
         args.num_classes = 2
-        args.classes = np.array([0, 1])
+        args.classes = np.array([0,1])
 
     main(args)
