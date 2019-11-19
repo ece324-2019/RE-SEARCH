@@ -14,7 +14,7 @@ class baseline(nn.Module):
         self.fc2 = nn.Linear(100*100, num_class)
 
 
-    def forward(self, x, batch_norm = False):
+    def forward(self, x, batch_norm = False, loss_fnc='MSE'):
         x=x.mean(1)
         x = x.reshape((x.size()[0],100*100))
         # x = F.relu(self.fc1(x))
@@ -42,7 +42,7 @@ class cnn(nn.Module):
             self.bn2 = nn.BatchNorm1d(num_class)
 
 
-    def forward(self, x, batch_norm=False):
+    def forward(self, x, batch_norm=False, loss_fnc = 'MSE'):
         if (batch_norm):
             x = self.pool(F.relu(self.conv_bn1(self.dropout2(self.conv1(x)))))
             x = self.pool(F.relu(self.conv_bn2(self.dropout2(self.conv2(x)))))
@@ -50,14 +50,16 @@ class cnn(nn.Module):
             x = x.view(-1, self.hidden_dim)
             x = F.relu(self.bn1(self.dropout1(self.fc1(x))))
             x = self.bn2(self.fc2(x))
-            x = F.softmax(x, dim=1)
+            if loss_fnc == 'MSE':
+                x = F.softmax(x, dim=1)
         else:
             x = self.pool(F.relu(self.dropout2(self.conv1(x))))
             x = self.pool(F.relu(self.dropout2(self.conv2(x))))
             x = x.view(-1, self.hidden_dim)
             x = F.relu(self.dropout1(self.fc1(x)))
             x = self.fc2(x)
-            x = F.softmax(x, dim=1)
+            if loss_fnc == 'MSE':
+                x = F.softmax(x, dim=1)
 
         return x
 
@@ -73,28 +75,29 @@ class cnn3(nn.Module):
 
         self.pool = nn.MaxPool2d(2, 2)
 
-        self.fc1 = nn.Linear(self.hidden_dim, 40)
-        self.fc2 = nn.Linear(40, num_class)
+        # self.fc1 = nn.Linear(self.hidden_dim, 40)
+        self.fc2 = nn.Linear(self.hidden_dim, num_class)
 
         self.dropout1 = nn.Dropout(p=dropout)
         self.dropout2 = nn.Dropout2d(p=dropout)
         if batch_norm:
-            self.conv_bn1 = nn.BatchNorm2d(4)
-            self.conv_bn2 = nn.BatchNorm2d(8)
-            self.conv_bn3 = nn.BatchNorm2d(10)
+            self.conv_bn1 = nn.BatchNorm2d(5)
+            self.conv_bn2 = nn.BatchNorm2d(5)
+            self.conv_bn3 = nn.BatchNorm2d(5)
             self.bn1 = nn.BatchNorm1d(40)
             self.bn2 = nn.BatchNorm1d(num_class)
 
 
-    def forward(self, x, batch_norm=False):
+    def forward(self, x, batch_norm=False, loss_fnc = 'MSE'):
         if (batch_norm):
             x = self.pool(F.relu(self.conv_bn1(self.dropout2(self.conv1(x)))))
             x = self.pool(F.relu(self.conv_bn2(self.dropout2(self.conv2(x)))))
             x = self.pool(F.relu(self.conv_bn3(self.dropout2(self.conv3(x)))))
             x = x.view(-1, self.hidden_dim)
-            x = F.relu(self.bn1(self.fc1(x)))
+            # x = F.relu(self.bn1(self.fc1(x)))
             x = self.bn2(self.fc2(x))
-            x = F.softmax(x, dim=1)
+            if loss_fnc == 'MSE':
+                x = F.softmax(x, dim=1)
         else:
             x = self.pool(F.relu(self.dropout2(self.conv1(x))))
             x = self.pool(F.relu(self.dropout2(self.conv2(x))))
@@ -102,5 +105,6 @@ class cnn3(nn.Module):
             x = x.view(-1, self.hidden_dim)
             x = F.relu(self.fc1(x))
             x = self.fc2(x)
-            x = F.softmax(x, dim=1)
+            if loss_fnc == 'MSE':
+                x = F.softmax(x, dim=1)
         return x

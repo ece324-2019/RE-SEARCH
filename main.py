@@ -138,7 +138,9 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False, epoch = 0):
             optimizer.zero_grad()
         else:
             model.eval()
-        outputs = model(inputs,args.batch_norm)
+        outputs = model(inputs,args.batch_norm, args.loss_function)
+        if args.loss_function == "CE":
+            outputs = torch.softmax(outputs)
         loss = loss_fnc(outputs, labels)
         if train:
             loss.backward()
@@ -227,12 +229,12 @@ def main(args):
     plt.show()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()  
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--batch_norm', type=bool, default=False)
-    parser.add_argument('--epochs', type=int, default=50)
-    parser.add_argument('--type', type=str, default='sleeves')
+    parser.add_argument('--batch_norm', type=bool, default=True)
+    parser.add_argument('--epochs', type=int, default=30)
+    parser.add_argument('--type', type=str, default='necklines')
     parser.add_argument('--loss_function', type=str, default='MSE')
     parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--dropout', type=float, default=0.1)
@@ -240,7 +242,7 @@ if __name__ == '__main__':
 
     print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
-    data_folder = './sleeves_v2'
+    data_folder = './neck'
     if args.type == 'colors':
         args.num_classes = 7
     elif args.type == 'sleeves':
