@@ -167,9 +167,10 @@ def main(args):
     testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
 
     model = baseline(args.num_classes)
+    print("summary", summary(model, (3, 100, 100)))
+
     if args.model == 'cnn':
         model = cnn(args.num_classes)
-        print("summary", summary(model, (3,100,100)))
 
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
@@ -221,12 +222,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=25)
     parser.add_argument('--type', type=str, default='sleeves')
     parser.add_argument('--loss_function', type=str, default='MSE')
     parser.add_argument('--model', type=str, default='cnn')
     args = parser.parse_args()
-    data_folder = './data-13/necklines'
+    data_folder = './sleeves_v2'
     if args.type == 'colors':
         args.num_classes = 7
     elif args.type == 'sleeves':
