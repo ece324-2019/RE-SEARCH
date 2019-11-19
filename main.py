@@ -157,7 +157,6 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False, epoch = 0):
     loss = np.mean(np.array(running_loss))
     return acc, loss
 
-
 def main(args):
 
     dataloader, h = fetch()
@@ -176,7 +175,7 @@ def main(args):
     model = baseline(args.num_classes)
     # print("summary", summary(model, (3, 100, 100)))
     if args.model == 'cnn':
-        model = cnn(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
+        model = cnn3(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
         # print("summary", summary(model, (3,100,100)))
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
@@ -207,8 +206,8 @@ def main(args):
 
     print("\nFinished Training")
 
-    train_acc = ss.savgol_filter(train_acc, 17, 1)
-    valid_acc = ss.savgol_filter(valid_acc, 17, 1)
+    # train_acc = ss.savgol_filter(train_acc, 17, 1)
+    # valid_acc = ss.savgol_filter(valid_acc, 17, 1)
     plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
     plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
     plt.title('Training and Validation Accuracy vs. Epoch')
@@ -217,8 +216,8 @@ def main(args):
     plt.legend()
     plt.show()
 
-    train_loss = ss.savgol_filter(train_loss, 17, 1)
-    valid_loss = ss.savgol_filter(valid_loss, 17, 1)
+    # train_loss = ss.savgol_filter(train_loss, 17, 1)
+    # valid_loss = ss.savgol_filter(valid_loss, 17, 1)
     plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
     plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
     plt.title('Training and Validation Loss vs. Epoch')
@@ -229,14 +228,14 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_norm', type=bool, default=False)
-    parser.add_argument('--epochs', type=int, default=25)
+    parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--type', type=str, default='sleeves')
     parser.add_argument('--loss_function', type=str, default='MSE')
-    parser.add_argument('--model', type=str, default='baseline')
-    parser.add_argument('--dropout', type=bool, default=False)
+    parser.add_argument('--model', type=str, default='cnn')
+    parser.add_argument('--dropout', type=float, default=0.1)
     args = parser.parse_args()
 
     print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
