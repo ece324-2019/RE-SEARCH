@@ -152,8 +152,6 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False, epoch = 0):
                 stats[1] += 1
         curr_acc += [stats[0] / len(outputs)]
         running_loss += [loss.item()]
-        if epoch = args.epochs-1:
-            
 
     acc = np.mean(np.array(curr_acc))
     loss = np.mean(np.array(running_loss))
@@ -178,7 +176,7 @@ def main(args):
     model = baseline(args.num_classes)
     # print("summary", summary(model, (3, 100, 100)))
     if args.model == 'cnn':
-        model = cnn(args.num_classes)
+        model = cnn(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
         # print("summary", summary(model, (3,100,100)))
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
@@ -231,16 +229,19 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch-size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_norm', type=bool, default=False)
-    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--epochs', type=int, default=25)
     parser.add_argument('--type', type=str, default='sleeves')
     parser.add_argument('--loss_function', type=str, default='MSE')
     parser.add_argument('--model', type=str, default='baseline')
-
+    parser.add_argument('--dropout', type=bool, default=False)
     args = parser.parse_args()
-    data_folder = '../sleeves'
+
+    print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
+
+    data_folder = './sleeves_v2'
     if args.type == 'colors':
         args.num_classes = 7
     elif args.type == 'sleeves':
