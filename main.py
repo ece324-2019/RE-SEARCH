@@ -4,7 +4,9 @@ import torch
 import scipy.signal as ss
 from torch.utils.data import DataLoader
 from model import *
+
 import torchvision
+from torchvision import models
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import torch.nn as nn
@@ -22,6 +24,8 @@ torch.manual_seed(2)
 
 """ Testing case: black, white, orange """
 """ import photos with correct labels """
+
+data_folder = '../sleeves'
 
 def get_mean_std(dataloader):
     mean = []
@@ -47,8 +51,8 @@ def fetch():
     # print(data_length)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=data_length)
     mean, std = get_mean_std(dataloader)
-    print("Original mean:", mean)
-    print("Original std:", std)
+    # print("Original mean:", mean)
+    # print("Original std:", std)
 
     dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize(mean=(mean, mean, mean), std=(std, std, std))]))
@@ -62,7 +66,7 @@ def fetch():
 def get_num(n):
     num_train = int(n * 0.80)
     num_valid = int(n * 0.10)
-    num_test =n - num_train - num_valid
+    num_test = n - num_train - num_valid
     return num_train, num_valid, num_test
 
 class ImageDataset(data.Dataset):
@@ -120,7 +124,7 @@ def split(dataloader,labels):
 
     return train_data,train_labels,valid_data,valid_labels,test_data,test_labels
 
-def eval(model, loader, loss_fnc, optimizer= None, train=False):
+def eval(model, loader, loss_fnc, optimizer= None, train=False, epoch = 0):
     running_loss = []
     curr_acc = []
     for i, data in enumerate(loader):
@@ -132,7 +136,9 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False):
         if train:
             model.train()
             optimizer.zero_grad()
-        outputs = model(inputs)
+        else:
+            model.eval()
+        outputs = model(inputs,args.batch_norm)
         loss = loss_fnc(outputs, labels)
         if train:
             loss.backward()
@@ -146,6 +152,9 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False):
                 stats[1] += 1
         curr_acc += [stats[0] / len(outputs)]
         running_loss += [loss.item()]
+        if epoch = args.epochs-1:
+            
+
     acc = np.mean(np.array(curr_acc))
     loss = np.mean(np.array(running_loss))
     return acc, loss
@@ -167,10 +176,10 @@ def main(args):
     testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
 
     model = baseline(args.num_classes)
+    # print("summary", summary(model, (3, 100, 100)))
     if args.model == 'cnn':
         model = cnn(args.num_classes)
-        print("summary", summary(model, (3,100,100)))
-
+        # print("summary", summary(model, (3,100,100)))
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
     elif args.loss_function == "MSE":
@@ -179,10 +188,10 @@ def main(args):
 
     train_acc, train_loss, valid_loss, valid_acc = [], [], [], []
     for epoch in range(args.epochs):
-        t_acc, t_loss = eval(model=model, loss_fnc=loss_fnc, optimizer=optimizer, loader=trainloader, train=True)
+        t_acc, t_loss = eval(model=model, loss_fnc=loss_fnc, optimizer=optimizer, loader=trainloader, train=True, epoch=epoch)
         train_acc += [t_acc]
         train_loss += [t_loss]
-        v_acc, v_loss = eval(model=model, loss_fnc=loss_fnc, loader=validloader)
+        v_acc, v_loss = eval(model=model, loss_fnc=loss_fnc, loader=validloader,epoch = epoch)
         valid_loss += [v_loss]
         valid_acc += [v_acc]
         print("Epoch",epoch,"Train Acc:", round(t_acc,3), "Valid Acc:",round(v_acc,3),"Train Loss", round(t_loss,3) , "Valid Loss:",round(v_loss,3))
@@ -199,8 +208,9 @@ def main(args):
         pass
 
     print("\nFinished Training")
-    train_acc = ss.savgol_filter(train_acc, 15, 2)
-    valid_acc = ss.savgol_filter(valid_acc, 15, 2)
+
+    train_acc = ss.savgol_filter(train_acc, 17, 1)
+    valid_acc = ss.savgol_filter(valid_acc, 17, 1)
     plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
     plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
     plt.title('Training and Validation Accuracy vs. Epoch')
@@ -209,6 +219,8 @@ def main(args):
     plt.legend()
     plt.show()
 
+    train_loss = ss.savgol_filter(train_loss, 17, 1)
+    valid_loss = ss.savgol_filter(valid_loss, 17, 1)
     plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
     plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
     plt.title('Training and Validation Loss vs. Epoch')
@@ -221,12 +233,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--batch_norm', type=bool, default=False)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--type', type=str, default='sleeves')
     parser.add_argument('--loss_function', type=str, default='MSE')
-    parser.add_argument('--model', type=str, default='cnn')
+    parser.add_argument('--model', type=str, default='baseline')
+
     args = parser.parse_args()
-    data_folder = './data-13/necklines'
+    data_folder = '../sleeves'
     if args.type == 'colors':
         args.num_classes = 7
     elif args.type == 'sleeves':
