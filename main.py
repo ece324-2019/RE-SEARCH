@@ -200,9 +200,6 @@ def main(args):
         valid_acc += [v_acc]
         print("Epoch",epoch,"Train Acc:", round(t_acc,3), "Valid Acc:",round(v_acc,3),"Train Loss", round(t_loss,3) , "Valid Loss:",round(v_loss,3))
 
-    print("validation confusion matrix")
-    eval(model=model, loss_fnc=loss_fnc, loader=validloader, cfm=True)
-
     print('\nFinal Train Accuracy: ', train_acc[-1])
     print('Final Train Loss: ', train_loss[-1])
     print('\nFinal Validation Accuracy: ', v_acc)
@@ -211,12 +208,13 @@ def main(args):
         test_acc, test_loss = eval(model=model, loss_fnc=loss_fnc, loader=testloader)
         print('\nTest Accuracy: ', test_acc)
         print('Test Loss: ', test_loss)
-
-        print("test confusion matrix")
-        eval(model=model, loss_fnc=loss_fnc, loader=testloader, cfm=True)
     except:
         pass
 
+    print("validation confusion matrix")
+    eval(model=model, loss_fnc=loss_fnc, loader=validloader, cfm=True)
+    print("test confusion matrix")
+    eval(model=model, loss_fnc=loss_fnc, loader=testloader, cfm=True)
     print("\nFinished Training")
 
     # train_acc = ss.savgol_filter(train_acc, 17, 1)
@@ -245,9 +243,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--lr', type=float, default=0.007)
     parser.add_argument('--batch_norm', type=bool, default=True)
-    parser.add_argument('--epochs', type=int, default=3)
+    parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--type', type=str, default='colors')
-    parser.add_argument('--loss_function', type=str, default='MSE')
+    parser.add_argument('--loss_function', type=str, default='CE')
     parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--dropout', type=float, default=0.12)
 

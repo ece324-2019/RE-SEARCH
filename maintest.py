@@ -37,36 +37,27 @@ def get_mean_std(dataloader):
     return np.mean(mean),np.mean(std)
 
 def fetch():
-    dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
+    trainset = torchvision.datasets.ImageFolder(root=args.train_folder, transform=transforms.Compose(
         [transforms.ToTensor()]))
-    h={}
-    for img in dataset.imgs:
-        if img[1] in h:
-            h[img[1]] += 1
-        else:
-            h[img[1]] = 1
-    # print(h)
-    data_length= len(dataset)
-    # print(data_length)
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=data_length)
-    mean, std = get_mean_std(dataloader)
-    # print("Original mean:", mean)
-    # print("Original std:", std)
+    trainloader = DataLoader(trainset, shuffle=False, batch_size=args.batch_size)
 
-    dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize(mean=(mean, mean, mean), std=(std, std, std))]))
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=1)
-    mean, std = get_mean_std(dataloader)
-    print("Calibrated mean:", mean)
-    print("Calibrated std:", std)
+    validset = torchvision.datasets.ImageFolder(root=args.valid_folder, transform=transforms.Compose(
+        [transforms.ToTensor()]))
+    validloader = DataLoader(validset, shuffle=False, batch_size=len(validset))
 
-    return dataloader, h
+    testset = torchvision.datasets.ImageFolder(root=args.test_folder, transform=transforms.Compose(
+        [transforms.ToTensor()]))
+    testloader = DataLoader(trainset, shuffle=False, batch_size=len(testset))
 
-def get_num(n):
-    num_train = int(n * 0.80)
-    num_valid = int(n * 0.10)
-    num_test = n - num_train - num_valid
-    return num_train, num_valid, num_test
+    mean, std = get_mean_std(trainloader)
+    print("train mean:", mean, "train std:", std)
+    mean, std = get_mean_std(validloader)
+    print("valid mean:", mean, "valid std:", std)
+    mean, std = get_mean_std(testloader)
+    print("test mean:", mean, "test std:", std)
+
+    return trainloader, validloader, testloader
+
 
 class ImageDataset(data.Dataset):
     def __init__(self, X, y):
@@ -78,50 +69,6 @@ class ImageDataset(data.Dataset):
         if torch.is_tensor(index):
             index = index.tolist()
         return self.X[index],self.y[index]
-
-def split(dataloader,labels):
-    # testing case:
-    # labels should be type [['white',121],['black',109],['orange',27]]
-
-    num = []
-    stats = []
-    for i in range(0,len(labels)):
-        num += [[0,0,0]]
-        stats += [[0,0,0]]
-
-    for i in range(0,len(labels)):
-        num[i][0],num[i][1],num[i][2] = get_num(labels[i])
-
-    num_train = 0
-    num_valid = 0
-    num_test = 0
-    for i in range(0,len(num)):
-        num_train += num[i][0]
-        num_valid += num[i][1]
-        num_test += num[i][2]
-
-    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = [], [], [], [], [], []
-
-    for i, data in enumerate(dataloader):
-        inputs, label = data
-        j = int(label)
-
-        if stats[j][0] < num[j][0]:
-            stats[j][0] += 1
-            train_data += [inputs.data[0]]
-            train_labels += [label.data[0]]
-        elif stats[j][1] < num[j][1]:
-            stats[j][1] += 1
-            valid_data += [inputs.data[0]]
-            valid_labels += [label.data[0]]
-        elif stats[j][2] < num[j][2]:
-            stats[j][2] += 1
-            test_data += [inputs.data[0]]
-            test_labels += [label.data[0]]
-        else:
-            print("ERROR: INPUT AND LABELS SIZE MISMATCH")
-
-    return train_data,train_labels,valid_data,valid_labels,test_data,test_labels
 
 def eval(model, loader, loss_fnc, optimizer= None, train=False, cfm=False):
     running_loss = []
@@ -164,18 +111,7 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False, cfm=False):
 
 def main(args):
 
-    dataloader, h = fetch()
-    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, h)
-
-    print("Mean of training data:", np.mean([train_data[i].mean().item() for i in range(len(train_data))]))
-    print("Standard Deviation of training data:", np.mean([train_data[i].std().item() for i in range(len(train_data))]))
-
-    training_set = ImageDataset(train_data, train_labels)
-    validation_set = ImageDataset(valid_data, valid_labels)
-    test_set = ImageDataset(test_data,test_labels)
-    trainloader = DataLoader(training_set, shuffle=True, batch_size=args.batch_size)
-    validloader = DataLoader(validation_set, shuffle=True, batch_size=len(valid_labels))
-    testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
+    trainloader, validloader, testloader = fetch()
 
     model = baseline(args.num_classes)
     # print("summary", summary(model, (3, 100, 100)))
@@ -217,8 +153,8 @@ def main(args):
 
     print("\nFinished Training")
 
-    train_acc = ss.savgol_filter(train_acc, 17, 1)
-    valid_acc = ss.savgol_filter(valid_acc, 17, 1)
+    # train_acc = ss.savgol_filter(train_acc, 17, 1)
+    # valid_acc = ss.savgol_filter(valid_acc, 17, 1)
     plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
     plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
     plt.title('Training and Validation Accuracy vs. Epoch')
@@ -227,8 +163,8 @@ def main(args):
     plt.legend()
     plt.show()
 
-    train_loss = ss.savgol_filter(train_loss, 17, 1)
-    valid_loss = ss.savgol_filter(valid_loss, 17, 1)
+    # train_loss = ss.savgol_filter(train_loss, 17, 1)
+    # valid_loss = ss.savgol_filter(valid_loss, 17, 1)
     plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
     plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
     plt.title('Training and Validation Loss vs. Epoch')
@@ -251,7 +187,9 @@ if __name__ == '__main__':
 
     print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
-    data_folder = '../colors'
+    args.train_folder = './train'
+    args.valid_folder = './valid'
+    args.test_folder = './test'
     if args.type == 'colors':
         args.class_names = ["black","blue","green","orange","red","white","yellow"]
         args.num_classes = 7

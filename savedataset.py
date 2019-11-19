@@ -1,5 +1,6 @@
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.model_selection import train_test_split
+import os
 import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
@@ -126,8 +127,12 @@ def main(args):
     dataloader, h = fetch()
     train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, h)
 
-    print("Mean of training data:", np.mean([train_data[i].mean().item() for i in range(len(train_data))]))
-    print("Standard Deviation of training data:", np.mean([train_data[i].std().item() for i in range(len(train_data))]))
+    mean, std = get_mean_std(trainloader)
+    print("train mean:", mean, "train std:", std)
+    mean, std = get_mean_std(validloader)
+    print("valid mean:", mean, "valid std:", std)
+    mean, std = get_mean_std(testloader)
+    print("test mean:", mean, "test std:", std)
 
     training_set = ImageDataset(train_data, train_labels)
     validation_set = ImageDataset(valid_data, valid_labels)
@@ -136,22 +141,29 @@ def main(args):
     validloader = DataLoader(validation_set, shuffle=True, batch_size=1)
     testloader = DataLoader(test_set, shuffle=True, batch_size=1)
 
-    for cnt in range(0,20):
-        # get some random training images
-        dataiter = iter(testloader)
-        image, labels = dataiter.next()
-        image = torchvision.utils.save_image(images, str(cnt) + '.jpg')
+    for i in range(0,3):
+        if i == 0:
+            loader = trainloader
+            set = training_set
+        elif i == 1:
+            loader = validloader
+            set = validation_set
+        elif i == 2:
+            loader = testloader
+            set = test_set
+        for cnt in range(0,len(set)):
+            # get some random training images
+            dataiter = iter(loader)
+            image, label = dataiter.next()
+            path = "./test/" +str(label.detach().numpy()[0]) +'/'
+            if os.path.exists(path):
+                pass
+            else:
+                os.mkdir(path)
+            torchvision.utils.save_image(image, path + str(cnt) + '.jpg')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--lr', type=float, default=0.005)
-    parser.add_argument('--batch_norm', type=bool, default=True)
-    parser.add_argument('--epochs', type=int, default=2)
     parser.add_argument('--type', type=str, default='colors')
-    parser.add_argument('--loss_function', type=str, default='MSE')
-    parser.add_argument('--model', type=str, default='cnn')
-    parser.add_argument('--dropout', type=float, default=0.15)
     args = parser.parse_args()
     # print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
