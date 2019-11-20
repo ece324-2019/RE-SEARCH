@@ -17,14 +17,9 @@ from torchsummary import summary
 from sklearn.metrics import confusion_matrix
 
 torch.manual_seed(2)
-""" Type of classifier """
-""" 1) args.type = color """
-""" 2) args.type = buttons """
-""" 3) args.type = neck """
-""" 4) args.type = sleeve """
 
-""" Testing case: black, white, orange """
-""" import photos with correct labels """
+# if torch.cuda.is_available():
+#     torch.set_default_tensor_type(torch.cuda.FloatTensor)
 
 def get_mean_std(dataloader):
     mean = []
@@ -129,8 +124,8 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
     for i, data in enumerate(loader):
         inputs, labels = data
         one_hot_labels = F.one_hot(labels, args.num_classes).float()
+        old_labels = labels
         if args.loss_function == "MSE":
-            old_labels = labels
             labels = one_hot_labels
         model.eval()
         if train:
@@ -163,27 +158,51 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
     loss = np.mean(np.array(running_loss))
     return acc, loss
 
+def fetch_existing():
+    trainset = torchvision.datasets.ImageFolder(root=args.train_folder, transform=transforms.Compose(
+        [transforms.ToTensor()]))
+    trainloader = DataLoader(trainset, shuffle=False, batch_size=args.batch_size)
+
+    validset = torchvision.datasets.ImageFolder(root=args.valid_folder, transform=transforms.Compose(
+        [transforms.ToTensor()]))
+    validloader = DataLoader(validset, shuffle=False, batch_size=len(validset))
+
+    testset = torchvision.datasets.ImageFolder(root=args.test_folder, transform=transforms.Compose(
+        [transforms.ToTensor()]))
+    testloader = DataLoader(trainset, shuffle=False, batch_size=len(testset))
+
+    mean, std = get_mean_std(trainloader)
+    print("train mean:", mean, "train std:", std)
+    mean, std = get_mean_std(validloader)
+    print("valid mean:", mean, "valid std:", std)
+    mean, std = get_mean_std(testloader)
+    print("test mean:", mean, "test std:", std)
+
+    return trainloader, validloader, testloader
+
 def main(args):
 
-    dataloader, h = fetch()
-    train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, h)
+    if args.create_dataset == True:
+        dataloader, h = fetch()
+        train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, h)
 
-    print("Mean of training data:", np.mean([train_data[i].mean().item() for i in range(len(train_data))]))
-    print("Standard Deviation of training data:", np.mean([train_data[i].std().item() for i in range(len(train_data))]))
+        print("Mean of training data:", np.mean([train_data[i].mean().item() for i in range(len(train_data))]))
+        print("Standard Deviation of training data:", np.mean([train_data[i].std().item() for i in range(len(train_data))]))
 
-    training_set = ImageDataset(train_data, train_labels)
-    validation_set = ImageDataset(valid_data, valid_labels)
-    test_set = ImageDataset(test_data,test_labels)
-    trainloader = DataLoader(training_set, shuffle=True, batch_size=args.batch_size)
-    validloader = DataLoader(validation_set, shuffle=True, batch_size=len(valid_labels))
-    testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
+        training_set = ImageDataset(train_data, train_labels)
+        validation_set = ImageDataset(valid_data, valid_labels)
+        test_set = ImageDataset(test_data,test_labels)
+        trainloader = DataLoader(training_set, shuffle=True, batch_size=args.batch_size)
+        validloader = DataLoader(validation_set, shuffle=True, batch_size=len(valid_labels))
+        testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
+    else:
+        trainloader, validloader, testloader = fetch_existing()
 
     model = baseline(args.num_classes)
     # print("summary", summary(model, (3, 100, 100)))
     if args.model == 'cnn':
         model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
-
-        # print("summary", summary(model, (3,100,100)))
+    # model.cuda()
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
     elif args.loss_function == "MSE":
@@ -240,7 +259,6 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=64)
-
     parser.add_argument('--lr', type=float, default=0.007)
     parser.add_argument('--batch_norm', type=bool, default=True)
     parser.add_argument('--epochs', type=int, default=50)
@@ -248,11 +266,16 @@ if __name__ == '__main__':
     parser.add_argument('--loss_function', type=str, default='CE')
     parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--dropout', type=float, default=0.12)
+    parser.add_argument('--create_dataset', type=bool, default = False)
 
     args = parser.parse_args()
     print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
     data_folder = '../colors'
+    args.train_folder = './RE-SEARCH_images/colors/train'
+    args.valid_folder = './RE-SEARCH_images/colors/valid'
+    args.test_folder = './RE-SEARCH_images/colors/test'
+
     if args.type == 'colors':
         args.class_names = ["black", "blue", "green", "orange", "red", "white", "yellow"]
         args.num_classes = 7
