@@ -18,8 +18,8 @@ from sklearn.metrics import confusion_matrix
 
 torch.manual_seed(2)
 
-# if torch.cuda.is_available():
-#     torch.set_default_tensor_type(torch.cuda.FloatTensor)
+if torch.cuda.is_available():
+    device = torch.device("cuda: 0" if torch.cuda.is_available() else "cpu")
 
 def get_mean_std(dataloader):
     mean = []
@@ -50,7 +50,7 @@ def fetch():
 
     dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize(mean=(mean, mean, mean), std=(std, std, std))]))
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=1)
+    dataloader = DataLoader(dataset, shuffle=True, batch_size=1)
     mean, std = get_mean_std(dataloader)
     print("Calibrated mean:", mean)
     print("Calibrated std:", std)
@@ -123,8 +123,14 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
     curr_acc = []
     for i, data in enumerate(loader):
         inputs, labels = data
-        one_hot_labels = F.one_hot(labels, args.num_classes).float()
+        old_inputs = inputs
         old_labels = labels
+        old_one_hot_labels = F.one_hot(labels, args.num_classes).float()
+
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        one_hot_labels = F.one_hot(labels, args.num_classes).float()
+
         if args.loss_function == "MSE":
             labels = one_hot_labels
         model.eval()
@@ -134,6 +140,7 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
         else:
             model.eval()
         outputs = model(inputs,args.batch_norm, args.loss_function)
+        old_outputs = torch.Tensor.cpu(outputs)
         if args.loss_function == "CE":
             outputs = torch.softmax(outputs, dim=1)
         loss = loss_fnc(outputs, labels)
@@ -143,8 +150,8 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
         stats = [0, 0]
         output_labels = []
         for i in range(0, outputs.size()[0]):
-            output_labels += [np.argmax(outputs[i].detach().numpy())]
-            if np.argmax(outputs[i].detach().numpy()) == np.argmax(one_hot_labels[i].detach().numpy()):
+            output_labels += [np.argmax(old_outputs[i].detach().numpy())]
+            if np.argmax(old_outputs[i].detach().numpy()) == np.argmax(old_one_hot_labels[i].detach().numpy()):
                 stats[0] += 1
             else:
                 stats[1] += 1
@@ -201,8 +208,8 @@ def main(args):
     model = baseline(args.num_classes)
     # print("summary", summary(model, (3, 100, 100)))
     if args.model == 'cnn':
-        model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
-    # model.cuda()
+        model = cnn(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
+    model = model.to(device)
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
     elif args.loss_function == "MSE":
@@ -230,6 +237,7 @@ def main(args):
     except:
         pass
 
+    torch.save(model,'model_c.pt')
     print("validation confusion matrix")
     eval(model=model, loss_fnc=loss_fnc, loader=validloader, cfm=True)
     print("test confusion matrix")
@@ -259,22 +267,22 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--lr', type=float, default=0.007)
+    parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_norm', type=bool, default=True)
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=25)
     parser.add_argument('--type', type=str, default='colors')
     parser.add_argument('--loss_function', type=str, default='CE')
     parser.add_argument('--model', type=str, default='cnn')
-    parser.add_argument('--dropout', type=float, default=0.12)
-    parser.add_argument('--create_dataset', type=bool, default = False)
+    parser.add_argument('--dropout', type=float, default=0.2)
+    parser.add_argument('--create_dataset', type=bool, default = True)
 
     args = parser.parse_args()
     print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
     data_folder = '../colors'
-    args.train_folder = './RE-SEARCH_images/colors/train'
-    args.valid_folder = './RE-SEARCH_images/colors/valid'
-    args.test_folder = './RE-SEARCH_images/colors/test'
+    args.train_folder = '../RE-SEARCH_images/colors_normalized/train'
+    args.valid_folder = '../RE-SEARCH_images/colors_normalized/valid'
+    args.test_folder = '../RE-SEARCH_images/colors_normalized/test'
 
     if args.type == 'colors':
         args.class_names = ["black", "blue", "green", "orange", "red", "white", "yellow"]
