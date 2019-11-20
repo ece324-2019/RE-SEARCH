@@ -171,11 +171,14 @@ def main(args):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    args = parser.parse_args()
+
     """ User specifications """
     data_folder = '../colors'
-    args.output_train_folder = "./RE-SEARCH_images/colors/train/"
-    args.output_valid_folder = "./RE-SEARCH_images/colors/valid/"
-    args.output_test_folder = "./RE-SEARCH_images/colors/test/"
+    args.output_train_folder = "../RE-SEARCH_images/colors_normalized/train/"
+    args.output_valid_folder = "../RE-SEARCH_images/colors_normalized/valid/"
+    args.output_test_folder = "../RE-SEARCH_images/colors_normalized/test/"
     args.type = 'colors'
     args.normalize = False
     """"""
