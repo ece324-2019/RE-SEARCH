@@ -16,16 +16,19 @@ import torch.utils.data as data
 from torchsummary import summary
 from sklearn.metrics import confusion_matrix
 
+torch.cuda.empty_cache()
 torch.manual_seed(2)
-
+print(torch.cuda.is_available())
 if torch.cuda.is_available():
     device = torch.device("cuda: 0" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
 
 def get_mean_std(dataloader):
     mean = []
     std = []
     for i, data in enumerate(dataloader):
         inputs,labels = data
+        # print(inputs)
         for j in range(labels.shape[0]):
             mean += [torch.mean(inputs[j])]
             std += [torch.std(inputs[j])]
@@ -45,8 +48,8 @@ def fetch():
     # print(data_length)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=data_length)
     mean, std = get_mean_std(dataloader)
-    # print("Original mean:", mean)
-    # print("Original std:", std)
+    print("Original mean:", mean)
+    print("Original std:", std)
 
     dataset = torchvision.datasets.ImageFolder(root=data_folder, transform=transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize(mean=(mean, mean, mean), std=(std, std, std))]))
@@ -125,41 +128,57 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
         inputs, labels = data
         old_inputs = inputs
         old_labels = labels
-        old_one_hot_labels = F.one_hot(labels, args.num_classes).float()
+        if args.type != 'buttons':
+            old_one_hot_labels = F.one_hot(labels, args.num_classes).float()
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            one_hot_labels = F.one_hot(labels, args.num_classes).float()
+            if args.loss_function == "MSE":
+                labels = one_hot_labels
+        else:
+            inputs = inputs.to(device).float()
+            labels = labels.to(device).float()
 
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-        one_hot_labels = F.one_hot(labels, args.num_classes).float()
-
-        if args.loss_function == "MSE":
-            labels = one_hot_labels
         model.eval()
         if train:
             model.train()
             optimizer.zero_grad()
         else:
             model.eval()
+
         outputs = model(inputs,args.batch_norm, args.loss_function)
-        old_outputs = torch.Tensor.cpu(outputs)
-        if args.loss_function == "CE":
+        if args.loss_function == "CE" and args.type !='buttons':
             outputs = torch.softmax(outputs, dim=1)
+        if args.loss_function == "CE" and args.type =='buttons':
+            # print("function is CE and type is buttons, applying sigmoid...")
+            outputs = torch.sigmoid(outputs)
+        old_outputs = torch.Tensor.cpu(outputs)
+
         loss = loss_fnc(outputs, labels)
         if train:
             loss.backward()
             optimizer.step()
         stats = [0, 0]
         output_labels = []
-        for i in range(0, outputs.size()[0]):
-            output_labels += [np.argmax(old_outputs[i].detach().numpy())]
-            if np.argmax(old_outputs[i].detach().numpy()) == np.argmax(old_one_hot_labels[i].detach().numpy()):
-                stats[0] += 1
-            else:
-                stats[1] += 1
-        curr_acc += [stats[0] / len(outputs)]
+        if args.type != 'buttons':
+            for i in range(0, outputs.size()[0]):
+                output_labels += [np.argmax(old_outputs[i].detach().numpy())]
+                if np.argmax(old_outputs[i].detach().numpy()) == np.argmax(old_one_hot_labels[i].detach().numpy()):
+                    stats[0] += 1
+                else:
+                    stats[1] += 1
+            curr_acc += [stats[0] / len(outputs)]
+        else:
+            # print(np.around(old_outputs.detach().numpy()))
+            curr_acc += [np.sum(np.around(old_outputs.detach().numpy())==old_labels.detach().numpy())/len(labels)]
         running_loss += [loss.item()]
+
         if cfm == True:
             print(args.class_names)
             print(confusion_matrix(y_true=old_labels.detach().numpy(), y_pred=output_labels, labels=args.classes))
+        if train == False:
+            del inputs, labels
+            torch.cuda.empty_cache()
 
     acc = np.mean(np.array(curr_acc))
     loss = np.mean(np.array(running_loss))
@@ -187,8 +206,33 @@ def fetch_existing():
 
     return trainloader, validloader, testloader
 
-def main(args):
+def main(args,input):
+    perms = []
+    out = []
 
+    L1 = ['cnn2','cnn3','cnn4','cnn1']
+    L2 = input[0]
+    L3 = input[1]
+    for a in L1:
+        for b in L2:
+            for c in L3:
+                perms += [[a,b,c]]
+
+    trainloader, validloader, testloader = get_data(args)
+
+    perms = [['cnn2',16,0.01]]
+    for i in range(0,len(perms)):
+        args.model = perms[i][0]
+        args.batch_size = perms[i][1]
+        args.lr = perms[i][2]
+
+        print("running model:", args.model, "lr:", args.lr, "batchsize:", args.batch_size, "bn:", args.batch_norm,
+              "dropout:", args.dropout)
+        out = out + [dab(args, trainloader, validloader, testloader)]
+    print(perms)
+    print(out)
+
+def get_data(args):
     if args.create_dataset == True:
         dataloader, h = fetch()
         train_data, train_labels, valid_data, valid_labels, test_data, test_labels = split(dataloader, h)
@@ -204,14 +248,27 @@ def main(args):
         testloader = DataLoader(test_set, shuffle=True, batch_size=len(test_labels))
     else:
         trainloader, validloader, testloader = fetch_existing()
+    return trainloader, validloader, testloader
+
+def dab(args, trainloader, validloader, testloader):
 
     model = baseline(args.num_classes)
-    # print("summary", summary(model, (3, 100, 100)))
-    if args.model == 'cnn':
-        model = cnn(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout)
+    if args.model == 'cnn2':
+        model = cnn2(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    elif args.model == 'cnn1':
+        model = cnn1(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    elif args.model == 'cnn3':
+        model = cnn3(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    elif args.model == 'cnn4':
+        model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    elif args.model == 'cnn5':
+        model = cnn5(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+
     model = model.to(device)
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
+        if args.type == 'buttons':
+            loss_fnc = nn.BCEWithLogitsLoss()
     elif args.loss_function == "MSE":
         loss_fnc = nn.MSELoss()
     optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
@@ -244,6 +301,8 @@ def main(args):
     eval(model=model, loss_fnc=loss_fnc, loader=testloader, cfm=True)
     print("\nFinished Training")
 
+    out = [train_acc[-1], train_loss[-1], v_acc, v_loss, test_acc, test_loss]
+    return out
     # train_acc = ss.savgol_filter(train_acc, 17, 1)
     # valid_acc = ss.savgol_filter(valid_acc, 17, 1)
     plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
@@ -266,20 +325,18 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--lr', type=float, default=0.002)
     parser.add_argument('--batch_norm', type=bool, default=True)
     parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--type', type=str, default='colors')
+    parser.add_argument('--type', type=str, default='buttons')
     parser.add_argument('--loss_function', type=str, default='CE')
-    parser.add_argument('--model', type=str, default='cnn')
-    parser.add_argument('--dropout', type=float, default=0.2)
-    parser.add_argument('--create_dataset', type=bool, default = True)
-
+    parser.add_argument('--model', type=str, default='cnn2')
+    parser.add_argument('--dropout', type=float, default=0.05)
+    parser.add_argument('--create_dataset', type= bool, default = True)
     args = parser.parse_args()
-    print("running model:", args.model, "lr:", args.lr,"batchsize:",args.batch_size,"bn:", args.batch_norm, "dropout:",args.dropout)
 
-    data_folder = '../colors'
+    data_folder = '../buttons_data'
     args.train_folder = '../RE-SEARCH_images/colors_normalized/train'
     args.valid_folder = '../RE-SEARCH_images/colors_normalized/valid'
     args.test_folder = '../RE-SEARCH_images/colors_normalized/test'
@@ -291,14 +348,17 @@ if __name__ == '__main__':
     elif args.type == 'sleeves':
         args.class_names = ["long", "short", "sleeveless"]
         args.num_classes = 3
-        args.classes = np.array([0, 1, 2, 3, 4, 5, 6])
+        args.classes = np.array([0, 1, 2])
     elif args.type == 'necklines':
-        args.class_names = ["collar", "crew", "square", "turtle", "v-neck"]
-        args.num_classes = 5
-        args.classes = np.array([0, 1, 2, 3, 4, 5, 6])
+        args.class_names = ["crew", "square", "turtle", "v-neck"]
+        args.num_classes = 4
+        args.classes = np.array([0, 1, 2, 3])
     elif args.type == 'buttons':
         args.class_names = ["button", "no button"]
-        args.num_classes = 2
+        args.num_classes = 1
         args.classes = np.array([0, 1])
 
-    main(args)
+    """"""
+    # input = [[128,32,64],[0.001,0.0005,0.003]]
+    input = [[32],[0.003,0.005,0.001,0.002]]
+    main(args,input)
