@@ -38,7 +38,7 @@ class baseline(nn.Module):
 
 class cnn2(nn.Module):
 
-    def __init__(self, num_class, batch_norm =False, dropout = 0.0, n1 = 5, n2 = 8, k1 = 3, k2 = 5, l1= 40, type = 'nobutton'):
+    def __init__(self, num_class, batch_norm =False, dropout = 0.0, n1 = 5, n2 = 8, k1 = 3, k2 = 5, l1= 40, type = 'colors'):
         super(cnn2,self).__init__()
         self.type = type
         if type == 'buttons':
@@ -92,7 +92,7 @@ class cnn2(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x)
+                x = torch.sigmoid(x)
             if self.type == 'buttons':
                 x = x.squeeze()
 
@@ -152,17 +152,17 @@ class cnn1(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x)
+                x = torch.sigmoid(x)
             if self.type == 'buttons':
                 x = x.squeeze()
 
         return x
 
 class cnn3(nn.Module):
-    def __init__(self, num_class, batch_norm=False, dropout=0.0, n1=5, n2=8, k1=3, k2=5,n3 = 5,k3=3, l1=40, type='nobutton'):
+    def __init__(self, num_class, batch_norm=False, dropout=0.0, n1=5, n2=5, k1=3, k2=5,n3 = 3,k3=5, l1=40, type='nobutton'):
         super(cnn3, self).__init__()
         self.type = type
-        if type == 'button':
+        if type == 'buttons':
             self.L = int((256 - (k1 - k1 % 2)) / 2)
         else:
             self.L = int((100 - (k1 - k1 % 2)) / 2)
@@ -195,12 +195,12 @@ class cnn3(nn.Module):
             x = self.pool(F.relu(self.conv_bn2(self.dropout2(self.conv2(x)))))
             x = self.pool(F.relu(self.conv_bn3(self.dropout2(self.conv3(x)))))
             x = x.view(-1, self.L)
-            # x = F.relu(self.bn1(self.fc1(x)))
+            x = F.relu(self.bn1(self.fc1(x)))
             x = self.bn2(self.fc2(x))
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x)
+                x = torch.sigmoid(x)
             if self.type == 'buttons':
                 x = x.squeeze()
         else:
@@ -214,7 +214,7 @@ class cnn3(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x)
+                x = torch.sigmoid(x)
             if self.type == 'buttons':
                 x = x.squeeze()
         return x
@@ -265,7 +265,7 @@ class cnn4(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x)
+                x = torch.sigmoid(x)
             if self.type == 'buttons':
                 x = x.squeeze()
         else:
@@ -279,7 +279,7 @@ class cnn4(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x)
+                x = torch.sigmoid(x)
             if self.type == 'buttons':
                 x = x.squeeze()
         return x
@@ -324,7 +324,7 @@ class cnn5(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x, dim=1)
+                x = torch.sigmoid(x, dim=1)
             if self.type == 'buttons':
                 x = x.squeeze()
         else:
@@ -339,7 +339,7 @@ class cnn5(nn.Module):
             if loss_fnc == 'MSE' and self.type != 'buttons':
                 x = F.softmax(x, dim=1)
             elif loss_fnc == 'MSE' and self.type == 'buttons':
-                x = F.sigmoid(x, dim=1)
+                x = torch.sigmoid(x, dim=1)
             if self.type == 'buttons':
                 x = x.squeeze()
         return x
