@@ -1,0 +1,23 @@
+--- C:\Users\yanis\Anaconda3\envs\yanisa_env\lib\site-packages\torch\nn\modules\conv.py
++++ C:\Users\yanis\Anaconda3\envs\yanisa_env\lib\site-packages\torch\nn\modules\conv.py
+@@ -127,16 +127,14 @@
+             in_channels, out_channels, kernel_size, stride, padding, dilation,
+             False, _pair(0), groups, bias, padding_mode)
+ 
+-    def conv2d_forward(self, input, weight):
++    @weak_script_method
++    def forward(self, input):
+         if self.padding_mode == 'circular':
+             expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
+                                 (self.padding[0] + 1) // 2, self.padding[0] // 2)
+             return F.conv2d(F.pad(input, expanded_padding, mode='circular'),
+-                            weight, self.bias, self.stride,
++                            self.weight, self.bias, self.stride,
+                             _pair(0), self.dilation, self.groups)
+-        return F.conv2d(input, weight, self.bias, self.stride,
++        return F.conv2d(input, self.weight, self.bias, self.stride,
+                         self.padding, self.dilation, self.groups)
+ 
+-    def forward(self, input):
+-        return self.conv2d_forward(input, self.weight)
+-

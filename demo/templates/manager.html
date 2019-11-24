@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Manager Side</title>
+        {{ dropzone.load() }}
+        {{ dropzone.style('font-family:lato;
+                            font-weight: 250;
+                            font-size: 30px;
+                            vertical-align: text-top;
+                            line-height: 0px;
+                            color: grey;
+                            border: 3px dashed grey;
+                            background-color: snow;
+                            margin: 1% 20%;
+                            min-height: 250px;') }}
+        <style>
+            body {background-color: lightyellowl;}
+            h1   {color: grey;
+                  font-family:lato;
+                  font-size:40px;
+                  font-weight:350;}
+            a    {color: dimgrey;
+                  font-family:lato;
+                  text-decoration:none;
+                  font-size: 25px;
+                  font-weight: 250;}
+            .logo  {height:100px;}
+        </style>
+    </head>
+    <body>
+        <center>
+            <img class="logo" src="/static/logo.png">
+            <h1> Manager Side !</h1>
+            <a href="{{ url_for('home') }}"> &#8592 Home</a>
+        </center>
+        {{ dropzone.create(action_view='manager') }}
+    </body>
+</html>
+

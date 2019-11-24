@@ -1,0 +1,9 @@
+--- C:\Users\Annie\RE-SEARCH\model.py
++++ C:\Users\Annie\RE-SEARCH\model.py
+@@ -1,5 +1,5 @@
+ class cnn4(nn.Module):
+-    def __init__(self, num_class, batch_norm=True, dropout=0.17, n1=5, n2=8, k1=3, k2=5, n3=5, k3=3,k4=3,n4=3, l1=40,type='nobutton'):
++    def __init__(self, num_class, batch_norm=False, dropout=0.0, n1=5, n2=8, k1=3, k2=5, n3=5, k3=3,k4=3,n4=3, l1=40,type='nobutton'):
+         super(cnn4, self).__init__()
+         self.type = type
+         if type == 'button':

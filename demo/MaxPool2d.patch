@@ -1,0 +1,10 @@
+--- C:\Users\yanis\Anaconda3\envs\yanisa_env\lib\site-packages\torch\nn\modules\pooling.py
++++ C:\Users\yanis\Anaconda3\envs\yanisa_env\lib\site-packages\torch\nn\modules\pooling.py
+@@ -57,6 +57,7 @@
+         https://github.com/vdumoulin/conv_arithmetic/blob/master/README.md
+     """
+ 
++    @weak_script_method
+     def forward(self, input):
+         return F.max_pool2d(input, self.kernel_size, self.stride,
+                             self.padding, self.dilation, self.ceil_mode,
