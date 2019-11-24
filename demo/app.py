@@ -8,6 +8,10 @@ from io import BytesIO
 import numpy as np
 from torchvision import transforms
 import torch
+import sys
+import time
+sys.path.insert(1, 'demo/customer.py')
+from customer import *
 # create the application object
 app = Flask(__name__)
 dropzone = Dropzone(app)
@@ -37,11 +41,11 @@ trans_n = transforms.Compose([transforms.ToTensor(),
                               transforms.Normalize((0.68, 0.68, 0.68), (0.283, 0.283, 0.283))])
 trans_b = transforms.Compose([transforms.ToTensor(),
                               transforms.Normalize((0.66, 0.66, 0.66), (0.31, 0.31, 0.31))])
-model_c = torch.load('model_c1.pt')
+model_c = torch.load('models/model_c1.pt')
 model_c.eval()
-model_s = torch.load('model_s.pt')
+model_s = torch.load('models/model_s.pt')
 model_s.eval()
-model_b=torch.load('model_0_0.795.pt')
+model_b=torch.load('models/model_0_0.795.pt')
 model_b.eval()
 print(model_b.conv_bn1)
 
@@ -56,15 +60,34 @@ def home():
 @app.route('/customer', methods=['POST','GET'])
 def customer():
     if request.method == "POST":
-        search = request.form['text']
-        print(search)
+        search_keyword = request.form['text']
+        search_keyword = search_keyword.lower().split()
+        clear_folder('./static/customer')
+        customer_results = search(search_keyword)
+        session['customer_results']=customer_results
         return redirect(url_for('customer_results'))
     return render_template('customer.html')  # render a template
 
 @app.route('/customer/results')
 def customer_results():
-    filenames = ['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg']
-    return render_template('customer_results.html',filenames=filenames)
+    filenames = []
+    if 'customer_results' in session:
+        filenames =session['customer_results']
+    filenames2 = []
+    filenames1 = filenames
+    bad_result = ''
+    if not filenames:
+        bad_result = " Sorry, No Results Found"
+    if len(filenames) > 5:
+        filenames1 = filenames[:5]
+        filenames2 = filenames[5:]
+    print(filenames1)
+    print(filenames2)
+    session.pop('customer_results',None)
+    return render_template('customer_results.html',
+                           filenames1=filenames1,
+                           filenames2=filenames2,
+                           bad_result=bad_result)
 
 
 @app.route('/manager', methods=['GET', 'POST'])
