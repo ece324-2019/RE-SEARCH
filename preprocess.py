@@ -1,13 +1,14 @@
 from PIL import Image
 import os
 import glob
+import io
 
 root='./webscraping/data'
 combos = ['long sleeve top', 'short sleeve top', 'sleeveless top']
 combos = ['black top', 'blue top', 'green top', 'orange top', 'red top', 'yellow top','white top']
 # combos = ['top with buttons', 'top']
 # combos = ['collared top','v neck top','crew neck top','square neck top','turtle neck top','scoop neck top']
-
+combos= ['vneck','turtleneck','crew','square','tops']
 stores = [ item for item in os.listdir(root) if os.path.isdir(os.path.join(root, item)) ]
 
 h = {'long sleeve top':0,
@@ -28,6 +29,11 @@ h={'black top':0,
    'white top':0
 }
 
+h = {'vneck':0,
+     'crew':0,
+     'square':0,
+     'turtleneck':0,
+     'tops':0}
 # print(h['sleeveless top'])
 for store in stores:
     subroot = root + '/' + store
@@ -37,14 +43,17 @@ for store in stores:
         if folder in combos:
             subfolder = subroot + '/' + folder
             for filename in glob.glob(subfolder+'/*.jpg'):
-                if not os.path.exists(folder):
-                    os.mkdir(folder)
-                    print('made folder:',filename)
-                img = Image.open(filename)
-                new_img = img.resize((100,100))
-                newfilename = os.path.join(folder, store + '_' +folder+ str(h[folder]))
-                h[folder] += 1
+
+
                 try:
+                    img = Image.open(open(filename, 'rb'))
+                    new_img = img  # .resize((100,100))
+                    folder1 = 'finaltest'
+                    if not os.path.exists(folder1):
+                        os.mkdir(folder1)
+                        print('made folder:',filename)
+                    newfilename = os.path.join(folder1, store + '_' + folder + str(h[folder]))
+                    h[folder] += 1
                     new_img.save(newfilename+'.jpg', "JPEG", quality=90)
                 except:
                     print(filename,store)

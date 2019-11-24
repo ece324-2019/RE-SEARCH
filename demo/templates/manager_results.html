@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <title>Results Manager Side</title>
+        <style>
+            h1   {color: grey;
+                  font-family:lato;
+                  font-size:40px;
+                  font-weight:350;}
+            p    {color: dimgrey;
+                  font-family:lato;
+                  font-size: 20px;
+                  font-weight: 200px;}
+            a    {color: dimgrey;
+                  font-family:lato;
+                  text-decoration:none;
+                  font-size: 25px;
+                  font-weight: 250;}
+            .column {
+              display: inline-block;
+              float: left;
+              width: 10%;
+              line-height: 0px;
+              margin: 0% 5%;
+            }
+            .row::after {
+              content: "";
+              clear: both;
+              display: table;
+              line-height: 0px;
+            }
+            .logo  {height:100px;}
+            br  {display:block;
+                margin:1px;}
+            .tab {left-margin: 100px;}
+
+      </style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+    <body>
+        <center>
+        <img class="logo" src="/static/logo.png">
+        <h1>Manager Side Results !</h1>
+        <a href="{{ url_for('manager') }}"> &#8592 Back</a><p>
+        </center>
+        <ul>
+        <div class="row">
+            {% for file_url in file_urls %}
+                <div class="column">
+                    <img style="height: 150px" src="/static/manager/{{ file_url }}">
+                </div>
+            {% endfor %}
+        </div>
+        <div class="row">
+            {% for result in nn_colour %}
+                <div class="column">
+                    <p class="tab">  {{result}}</p>
+                </div>
+            {% endfor %}
+            <div/>
+            <div class="row">
+            {% for result in nn_sleeves %}
+                <div class="column">
+                    <p class="tab">  {{result}}</p>
+                </div>
+            {% endfor %}
+            <div/>
+        <div class="row">
+            {% for result in nn_necklines %}
+                <div class="column">
+                    <p class="tab">  {{result}}</p>
+                </div>
+            {% endfor %}
+            <div/>
+        <div class="row">
+        {% for result in nn_buttons %}
+            <div class="column">
+                <p class="tab">  {{result}}</p>
+            </div>
+        {% endfor %}
+        <div/>
+        </ul>
+    </body>
+</html>

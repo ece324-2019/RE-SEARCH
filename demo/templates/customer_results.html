@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <title>Results Customer Side</title>
+        <style>
+            body {background-color: lightyellowl;}
+            h1   {color: grey;
+                  font-family:lato;
+                  font-size:40px;
+                  font-weight:350;}
+            p    {color: dimgrey;
+                  font-family:optima;}
+            a    {color: dimgrey;
+                  font-family:lato;
+                  text-decoration:none;
+                  font-size: 25px;
+                  font-weight: 250;}
+            .column {
+              display: inline-block;
+              float: left;
+              width: 15%;
+              padding: 15px;
+            }
+            .row::after {
+              content: "";
+              clear: both;
+              display: table;
+              line-height: 0px;
+            }
+            .logo  {height:100px;}
+
+      </style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+    <body>
+        <center>
+        <img class="logo" src="/static/logo.png">
+        <h1>Customer Side Results !</h1>
+        <a href="{{ url_for('customer') }}"> &#8592 Back</a><p>
+        </center>
+        <ul>
+        <div class="row">
+            {% for filename in filenames %}
+                <div class="column">
+                    <img style="height: 150px" src="/static/customer/{{ filename }}">
+                </div>
+            {% endfor %}
+        </div>
+        </ul>
+    </body>
+</html>

@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <title>Customer Side</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <style>
+    h1   {color: grey;
+          font-family:lato;
+          font-size:40px;
+          font-weight:350;}
+    p    {color: dimgrey;
+          font-family:lato;
+          font-size: 30px;
+          font-weight: 275;}
+    a    {color: dimgrey;
+          font-family:lato;
+          text-decoration:none;
+          font-size: 25px;
+          font-weight: 250;}
+    .logo  {height:100px;}
+    input  { width: 500px;
+            height: 50px;
+            font-size: 25px;
+            padding: 12px;
+            font-family: lato;
+            text-align: center;
+            font-weight: 100;}
+
+  </style>
+
+  <body>
+    <div class="container">
+      <center>
+        <img class="logo" src="/static/logo.png">
+        <h1>Customer Side!</h1>
+        <a href="{{ url_for('home') }}"> &#8592 Home</a>
+      <p>Enter a Search ...   </p>
+      <form method="POST" autocomplete="off">
+        <input name="text">
+      </form>
+      </center>
+    </div>
+  </body>
+</html>

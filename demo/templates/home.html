@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Home Page</title>
+        <style>
+            h1   {color: grey;
+                  font-family:lato;
+                  font-size:40px;
+                  font-weight:350;}
+            a    {color: dimgrey;
+                  font-family:lato;
+                  font-size: 25px;
+                  font-weight: 250;
+                  text-decoration:none;}
+            .logo  {height:100px;}
+
+        </style>
+    </head>
+    <body>
+        <center>
+            <img class="logo" src="/static/logo.png">
+            <h1>Welcome to RE-SEARCH!</h1>
+            <a href="{{ url_for('manager') }}"> &#8594 Manager Side</a>
+            <br>
+            <br>
+            <a href="{{ url_for('customer') }}"> &#8594 Customer Side</a>
+
+        </center>
+
+    </body>
+</html>

@@ -349,7 +349,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.002)
     parser.add_argument('--batch_norm', type=bool, default=True)
-    parser.add_argument('--epochs', type=int, default=15)
+    parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--type', type=str, default='buttons')
     parser.add_argument('--loss_function', type=str, default='CE')
     parser.add_argument('--model', type=str, default='cnn4')

@@ -1,0 +1,10 @@
+--- C:\Users\yanis\Anaconda3\envs\yanisa_env\lib\site-packages\torch\nn\modules\dropout.py
++++ C:\Users\yanis\Anaconda3\envs\yanisa_env\lib\site-packages\torch\nn\modules\dropout.py
+@@ -36,6 +36,7 @@
+        http://arxiv.org/abs/1411.4280
+     """
+ 
++    @weak_script_method
+     def forward(self, input):
+         return F.dropout2d(input, self.p, self.training, self.inplace)
+ 
