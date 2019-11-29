@@ -25,15 +25,18 @@ def get_things(L):
 def make_givelist(L):
     arg = []
     params = ""
-    type = [['color=',['black','blue','red','green','yellow','white','orange']],
-            ['neckline=', ["collar", "crew", "square", "turtleneck", "v-neck"]],
-            ['sleeves=', ["long", "short", "sleeveless"]]]
+    type = [['color=',[['black'],['blue','cyan','ocean'],['red','pomegranate'],['green','forest','olive'],['yellow','egg','sun'],['white','beige','neutral'],['orange','sunset']]],
+            ['neckline=', [["crew","round","scoop"], ["square","square-neck","square-necks","flat"], ["turtle","turtleneck","turtlenecks"], ["v-neck","v"]]],
+            ['sleeves=', [["long"], ["short"], ["sleeveless"]]],
+            ['buttons=',[["buttons", 'button']]]]
+
     for i in range(0,len(L)):
         for j in range(0,len(type)):
             for k in range(0,len(type[j][1])):
-                if L[i] == type[j][1][k]:
-                    temp = type[j][0] + "'" + L[i] + "'"
-                    params += type[j][0][0:-1] + '_confidence' + ' + '
-                    arg += [temp]
+                for a in range(0,len(type[j][1][k])):
+                    if L[i] == type[j][1][k][a]:
+                        temp = type[j][0] + "'" + type[j][1][k][0] + "'"
+                        params += type[j][0][0:-1] + '_confidence' + ' * '
+                        arg += [temp]
     params = params[0:-3]
     return arg,params

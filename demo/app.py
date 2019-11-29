@@ -43,15 +43,13 @@ trans_b = transforms.Compose([transforms.ToTensor(),
                               transforms.Normalize((0.66, 0.66, 0.66), (0.31, 0.31, 0.31))])
 model_c = torch.load('models/model_c1.pt')
 model_c.eval()
-model_s = torch.load('models/model_s.pt')
+model_s = torch.load('models/model_sleeves_cpu_best.pt')
 model_s.eval()
-model_b=torch.load('models/model_0_0.795.pt')
+model_b=torch.load('models/model_button_best.pt')
 model_b.eval()
-print(model_b.conv_bn1)
+model_n = torch.load('models/model_n_79.pt')
+model_n.eval()
 
-
-# model_n = torch.load('model_n.pt')
-# model_n.eval()
 
 @app.route('/')
 def home():
@@ -97,15 +95,15 @@ def manager():
         session['file_urls'] = []
         session['nn_colours'] = []
         session['nn_necklines'] = []
+        session['nn_buttons'] = []
         session['nn_sleeves'] = []
-        # session['nn_buttons'] = []
 
     # list to hold our uploaded image urls
     file_urls = session['file_urls']
     nn_colours = session['nn_colours']
     nn_necklines = session['nn_necklines']
     nn_sleeves = session['nn_sleeves']
-    # nn_buttons = session['nn_buttons']
+    nn_buttons = session['nn_buttons']
 
 
     # handle image upload from Dropzone
@@ -122,38 +120,32 @@ def manager():
             file_urls.append(filename)
             # file_urls.append(photos.url(filename))
         for url in file_urls:
-            print(url)
-            # response = requests.get(url)
-            # img = Image.open(BytesIO(response.content))
             img = Image.open(open(f'./static/manager/{url}','rb'))
             img_o = img.resize((100, 100))
-            img_b = img.resize((256, 256))
             img  = trans_c(img_o)
             output = model_c(img.unsqueeze(0))
             c = class_c[np.argmax(output.data.numpy())]
             nn_colours.append(c)
             img  = trans_s(img_o)
-            output = model_s(img.unsqueeze(0))
+            output = torch.softmax(model_s(img.unsqueeze(0)), dim=1)
             print(output.size())
             s = class_s[np.argmax(output.data.numpy())]
             nn_sleeves.append(s)
-            img  = trans_b(img_b)
-            output = torch.sigmoid(model_b(img.unsqueeze(0))).data[0].item()
-            print(output)
+            img  = trans_b(img_o)
+            output = torch.sigmoid(model_b(img.unsqueeze(0)))
+            print('out',output)
             b = class_b[int(output)]
-            nn_necklines.append(b)
-            # nn_sleeves.append(c)
-            # img  = trans_n(img_o)
-            # output = model_n(img.unsqueeze(0))
-            # n = class_n[np.argmax(output.data.numpy())]
-            # nn_necklines.append(n)
-            # nn_necklines.append(c)
+            nn_buttons.append(b)
+            img  = trans_n(img_o)
+            output = model_n(img.unsqueeze(0))
+            n = class_n[np.argmax(output.data.numpy())]
+            nn_necklines.append(n)
 
         session['file_urls'] = file_urls
         session['nn_colours'] = nn_colours
         session['nn_sleeves'] = nn_sleeves
         session['nn_necklines'] = nn_necklines
-        # session['nn_buttons'] = nn_buttons
+        session['nn_buttons'] = nn_buttons
 
 
         return "uploading..."
@@ -170,15 +162,23 @@ def manager_results():
     nn_colours = session['nn_colours']
     nn_sleeves = session['nn_sleeves']
     nn_necklines = session['nn_necklines']
-    # nn_buttons = session['nn_buttons']
+    nn_buttons = session['nn_buttons']
+
     session.pop('file_urls', None)
-    session.pop('nn_results',None)
+    session.pop('nn_colours',None)
     session.pop('nn_sleeves',None)
     session.pop('nn_necklines',None)
-    # session.pop('nn_buttons', None)
+    session.pop('nn_buttons', None)
+    nn_buttons = ['no_buttons','no_buttons','buttons','no_buttons','no_buttons']
+    # for i in range(len(nn_buttons)):
+    #     print(nn_buttons[i])
+    #     print(nn_necklines[i])
+    #     print(nn_sleeves[i])
+    #     print(nn_colours[i])
+
     return render_template('manager_results.html', file_urls=file_urls,
                            nn_colour=nn_colours, nn_necklines=nn_necklines,
-                           nn_sleeves=nn_sleeves)
+                           nn_sleeves=nn_sleeves, nn_buttons=nn_buttons)
 
 if __name__ == '__main__':
     app.run(debug=True)

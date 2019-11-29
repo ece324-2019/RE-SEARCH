@@ -21,7 +21,7 @@ torch.manual_seed(1)
 print(torch.cuda.is_available())
 if torch.cuda.is_available():
     device = torch.device("cuda: 0" if torch.cuda.is_available() else "cpu")
-    device = "cpu"
+device = "cpu"
 
 def get_mean_std(dataloader):
     mean = []
@@ -146,7 +146,7 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
         else:
             model.eval()
 
-        outputs = model(inputs,args.batch_norm, args.loss_function)
+        outputs = model(inputs)
         if args.loss_function == "CE" and args.type !='buttons':
             outputs = torch.softmax(outputs, dim=1)
         if args.loss_function == "CE" and args.type =='buttons':
@@ -219,7 +219,7 @@ def main(args,input):
 
     trainloader, validloader, testloader = get_data(args)
 
-    perms = [['cnn2',32,0.003]]
+    perms = [['cnn_sleeves',32,0.002]]
     for i in range(0,len(perms)):
         args.model = perms[i][0]
         args.batch_size = perms[i][1]
@@ -251,18 +251,19 @@ def get_data(args):
 
 def dab(args, trainloader, validloader, testloader,name):
 
-    model = baseline(args.num_classes)
-    if args.model == 'cnn2':
-        model = cnn2(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    # elif args.model == 'cnn1':
-    #     model = cnn1(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    elif args.model == 'cnn3':
-        model = cnn3(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    elif args.model == 'cnn4':
-        model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    # elif args.model == 'cnn5':
-    #     model = cnn5(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-
+    # model = baseline(args.num_classes)
+    # if args.model == 'cnn2':
+    #     model = cnn2(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    # # elif args.model == 'cnn1':
+    # #     model = cnn1(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    # elif args.model == 'cnn3':
+    #     model = cnn3(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    # elif args.model == 'cnn4':
+    #     model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    # # elif args.model == 'cnn5':
+    # #     model = cnn5(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    if args.type == 'sleeves':
+        model = baseline(num_class=args.num_classes)
     model = model.to(device)
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
@@ -293,7 +294,7 @@ def dab(args, trainloader, validloader, testloader,name):
     except:
         pass
 
-    torch.save(model,'model_necklines_cpu_best.pt')
+    torch.save(model,'model_sleeves_cpu_best.pt')
     print("validation confusion matrix")
     eval(model=model, loss_fnc=loss_fnc, loader=validloader, cfm=True)
     print("test confusion matrix")
@@ -339,20 +340,20 @@ def dab(args, trainloader, validloader, testloader,name):
     plt.show()
     return out
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.002)
     parser.add_argument('--batch_norm', type=bool, default=True)
-    parser.add_argument('--epochs', type=int, default=20)
-    parser.add_argument('--type', type=str, default='necklines')
+    parser.add_argument('--epochs', type=int, default=50  )
+    parser.add_argument('--type', type=str, default='sleeves')
     parser.add_argument('--loss_function', type=str, default='CE')
-    parser.add_argument('--model', type=str, default='cnn2')
-    parser.add_argument('--dropout', type=float, default=0.1)
+    parser.add_argument('--model', type=str, default='cnn_sleeves')
+    parser.add_argument('--dropout', type=float, default=0.0)
     parser.add_argument('--create_dataset', type= bool, default = True)
     args = parser.parse_args()
 
-    data_folder = '../necklines_inverted'
+    data_folder = './slevz'
     args.train_folder = '../RE-SEARCH_images/colors_normalized/train'
     args.valid_folder = '../RE-SEARCH_images/colors_normalized/valid'
     args.test_folder = '../RE-SEARCH_images/colors_normalized/test'
