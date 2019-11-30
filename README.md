@@ -32,3 +32,6 @@ MODELS FOLDER:
 
 contains all the saved best models so far...
 
+WEBSCRAPING FOLDER
+
+contains scripts for scraping stores
