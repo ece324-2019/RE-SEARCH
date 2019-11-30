@@ -169,7 +169,6 @@ def manager_results():
     session.pop('nn_sleeves',None)
     session.pop('nn_necklines',None)
     session.pop('nn_buttons', None)
-    nn_buttons = ['no_buttons','no_buttons','buttons','no_buttons','no_buttons']
     # for i in range(len(nn_buttons)):
     #     print(nn_buttons[i])
     #     print(nn_necklines[i])
