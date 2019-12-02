@@ -1,4 +1,7 @@
 # RE-SEARCH
+By Annie and Yanisa 2019
+
+Here are the scripts used in our RE-SEARCH project. Note: we did not include our physical dataset, as that would probably blow up the repository space limit.
 
 DEMO FOLDER:
 contains the web application used during demo/presentation. 
