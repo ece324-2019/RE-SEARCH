@@ -11,6 +11,16 @@ Customer side search engine which queries a **LOCAL** db to obtain search result
 
 Manager side allows upload of images that get preprocessed and ran through saved models to return predicted labels.
 
+DEMO/CUSTOMER.PY:
+
+calls customer_helpers.py with inputted search keywords to obtain the paths of the image results.
+
+
+DEMO/CUSTOMER_HELPERS.PY:
+
+stores functions called by customer.py that generates query based on inputted search keywords and returns the paths of the image results.
+
+
 MAIN.PY:
 
 trains a NN model based on specified parameters and dataset specified through datafolder path. Will show plots, confusion matrices and save model. 
@@ -24,9 +34,21 @@ PREPROCESS.PY:
 
 preprocesses all images scraped from web stored in webscraping/data folder, resizes and accumulates images into new test folders for main.py
 
-GRID_SEARCH.PY:
 
-Script used to run a hyperparameter grid search to optimize model.
+INTEGRATE.PY:
+
+runs all images stored in the input folder location through the model stored and outputs the label and confidence of the images in a list.
+
+
+PROCESS.PY:
+
+for images in a specified folder, calls integrate.py to generate predictions and labels for each clothing feature type and stores the results in a local database in a standardized form.
+
+
+TEST.PY:
+
+stores functions that generate queries to store and search through a local database.
+
 
 MODELS FOLDER:
 

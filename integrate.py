@@ -4,8 +4,13 @@ from PIL import Image
 import glob
 from torchvision import transforms
 
-# if torch.cuda.is_available():
-#     device = torch.device("cuda: 0" if torch.cuda.is_available() else "cpu")
+# This file runs the images stored in test_folder through the model type specified by in_type.
+# in_type can be 'colors','necklines','sleeves',or 'buttons'. 
+# If the resulting prediction confidence is above the specified threshold,
+# the result outputted.
+
+if torch.cuda.is_available():
+    device = torch.device("cuda: 0" if torch.cuda.is_available() else "cpu")
 
 
 def integration(test_folder,in_type):
@@ -78,7 +83,3 @@ def integration(test_folder,in_type):
         out += [[label,value]]
 
     return out
-
-# ans = integration('../test_folder','colors')
-# for dab in ans:
-#     print(dab)
