@@ -8,17 +8,14 @@ cursor = conn.cursor()
 
 def get_things(L):
     givelist,giveparams = make_givelist(L)
-    # print(givelist)
-    # print(giveparams)
     query = "SELECT TOP 10 UUID,path_to_file FROM classifier.dbo.classified_tops WHERE " + " AND ".join(givelist) + " ORDER BY " + giveparams +" DESC"
-    # query = "SELECT TOP 5 UUID,path FROM test.dbo.classified_tops ORDER BY color_cert DESC"
     print(query)
     cursor.execute(query)
 
     out = []
     for row in cursor:
         out += [[row[0],row[1]]]
-        print(row)
+        # print(row)
 
     return out
 def delete():

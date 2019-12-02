@@ -5,6 +5,7 @@ import scipy.signal as ss
 from torch.utils.data import DataLoader
 from model import *
 
+""" This file contains a training loop and performs a grid search with parameters specified at the bottom section labeled INPUTS"""
 import torchvision
 from torchvision import models
 import torchvision.transforms as transforms
@@ -18,17 +19,15 @@ from sklearn.metrics import confusion_matrix
 
 torch.cuda.empty_cache()
 torch.manual_seed(1)
-print(torch.cuda.is_available())
+# print(torch.cuda.is_available())
 if torch.cuda.is_available():
     device = torch.device("cuda: 0" if torch.cuda.is_available() else "cpu")
-device = "cpu"
 
 def get_mean_std(dataloader):
     mean = []
     std = []
     for i, data in enumerate(dataloader):
         inputs,labels = data
-        # print(inputs)
         for j in range(labels.shape[0]):
             mean += [torch.mean(inputs[j])]
             std += [torch.std(inputs[j])]
@@ -43,9 +42,7 @@ def fetch():
             h[img[1]] += 1
         else:
             h[img[1]] = 1
-    # print(h)
     data_length= len(dataset)
-    # print(data_length)
     dataloader = DataLoader(dataset, shuffle=False, batch_size=data_length)
     mean, std = get_mean_std(dataloader)
     print("Original mean:", mean)
@@ -78,9 +75,6 @@ class ImageDataset(data.Dataset):
         return self.X[index],self.y[index]
 
 def split(dataloader,labels):
-    # testing case:
-    # labels should be type [['white',121],['black',109],['orange',27]]
-
     num = []
     stats = []
     for i in range(0,len(labels)):
@@ -150,7 +144,6 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
         if args.loss_function == "CE" and args.type !='buttons':
             outputs = torch.softmax(outputs, dim=1)
         if args.loss_function == "CE" and args.type =='buttons':
-            # print("function is CE and type is buttons, applying sigmoid...")
             outputs = torch.sigmoid(outputs)
         old_outputs = torch.Tensor.cpu(outputs)
 
@@ -169,7 +162,6 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
                     stats[1] += 1
             curr_acc += [stats[0] / len(outputs)]
         else:
-            # print(np.around(old_outputs.detach().numpy()))
             curr_acc += [np.sum(np.around(old_outputs.detach().numpy())==old_labels.detach().numpy())/len(labels)]
         running_loss += [loss.item()]
 
@@ -182,54 +174,6 @@ def eval(model, loader, loss_fnc, optimizer= None, train=False,cfm = False):
     acc = np.mean(np.array(curr_acc))
     loss = np.mean(np.array(running_loss))
     return acc, loss
-
-def fetch_existing():
-    trainset = torchvision.datasets.ImageFolder(root=args.train_folder, transform=transforms.Compose(
-        [transforms.ToTensor()]))
-    trainloader = DataLoader(trainset, shuffle=False, batch_size=args.batch_size)
-
-    validset = torchvision.datasets.ImageFolder(root=args.valid_folder, transform=transforms.Compose(
-        [transforms.ToTensor()]))
-    validloader = DataLoader(validset, shuffle=False, batch_size=len(validset))
-
-    testset = torchvision.datasets.ImageFolder(root=args.test_folder, transform=transforms.Compose(
-        [transforms.ToTensor()]))
-    testloader = DataLoader(trainset, shuffle=False, batch_size=len(testset))
-
-    mean, std = get_mean_std(trainloader)
-    print("train mean:", mean, "train std:", std)
-    mean, std = get_mean_std(validloader)
-    print("valid mean:", mean, "valid std:", std)
-    mean, std = get_mean_std(testloader)
-    print("test mean:", mean, "test std:", std)
-
-    return trainloader, validloader, testloader
-
-def main(args,input):
-    perms = []
-    out = []
-
-    L1 = ['cnn2','cnn3','cnn4','cnn1']
-    L2 = input[0]
-    L3 = input[1]
-    for a in L1:
-        for b in L2:
-            for c in L3:
-                perms += [[a,b,c]]
-
-    trainloader, validloader, testloader = get_data(args)
-
-    perms = [['cnn_sleeves',32,0.002]]
-    for i in range(0,len(perms)):
-        args.model = perms[i][0]
-        args.batch_size = perms[i][1]
-        args.lr = perms[i][2]
-
-        print("running model:", args.model, "lr:", args.lr, "batchsize:", args.batch_size, "bn:", args.batch_norm,
-              "dropout:", args.dropout)
-        out = out + [dab(args, trainloader, validloader, testloader,i)]
-    print(perms)
-    print(out)
 
 def get_data(args):
     if args.create_dataset == True:
@@ -249,21 +193,42 @@ def get_data(args):
         trainloader, validloader, testloader = fetch_existing()
     return trainloader, validloader, testloader
 
-def dab(args, trainloader, validloader, testloader,name):
+def main(args,input):
+    perms = []
+    results = []
 
-    # model = baseline(args.num_classes)
-    # if args.model == 'cnn2':
-    #     model = cnn2(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    # # elif args.model == 'cnn1':
-    # #     model = cnn1(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    # elif args.model == 'cnn3':
-    #     model = cnn3(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    # elif args.model == 'cnn4':
-    #     model = cnn4(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
-    # # elif args.model == 'cnn5':
-    # #     model = cnn5(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    L1 = input[0]
+    L2 = input[1]
+    L3 = input[2]
+    for a in L1:
+        for b in L2:
+            for c in L3:
+                perms += [[a,b,c]]
+
+    trainloader, validloader, testloader = get_data(args)
+    for i in range(0,len(perms)):
+        args.batch_size = perms[i][0]
+        args.lr = perms[i][1]
+        args.dropout = perms[i][2]
+        print("running model:", args.type, "lr:", args.lr, "batchsize:", args.batch_size, "bn:", args.batch_norm,
+              "dropout:", args.dropout)
+        results = results + [training_loop(args, trainloader, validloader, testloader,i)]
+    for i in range(0,len(perms)):
+        print("batch size: ",perms[i][0], "learning rate: ",perms[i][1], "dropout: ",perms[i][2])
+        print("test acc: ",results[i][0], "validation acc: ", results[i][2], "test acc: ", results[i][4])
+        print("")
+
+def training_loop(args, trainloader, validloader, testloader,name):
+
+    model = baseline(args.num_classes)
     if args.type == 'sleeves':
-        model = baseline(num_class=args.num_classes)
+        model = cnn_sleeves(num_class=args.num_classes, batch_norm=args.batch_norm,dropout=args.dropout,type = args.type)
+    elif args.type == 'colors':
+        model = cnn_colors(num_class=args.num_classes, batch_norm=args.batch_norm, dropout=args.dropout, type=args.type)
+    elif args.type == 'necklines':
+        model = cnn_necklines(num_class=args.num_classes, batch_norm=args.batch_norm, dropout=args.dropout, type=args.type)
+    elif args.type == 'buttons':
+        model = cnn_buttons(num_class=args.num_classes, batch_norm=args.batch_norm, dropout=args.dropout, type=args.type)
     model = model.to(device)
     if args.loss_function == "CE":
         loss_fnc = nn.CrossEntropyLoss()
@@ -294,7 +259,15 @@ def dab(args, trainloader, validloader, testloader,name):
     except:
         pass
 
-    torch.save(model,'model_sleeves_cpu_best.pt')
+    if args.type == 'colors':
+        torch.save(model,'model_c_' + str(round(test_acc)) + '.pt')
+    elif args.type == 'sleeves':
+        torch.save(model,'model_s_' + str(round(test_acc)) + '.pt')
+    elif args.type == 'necklines':
+        torch.save(model,'model_n_' + str(round(test_acc)) + '.pt')
+    elif args.type == 'buttons':
+        torch.save(model,'model_b_' + str(round(test_acc)) + '.pt')
+
     print("validation confusion matrix")
     eval(model=model, loss_fnc=loss_fnc, loader=validloader, cfm=True)
     print("test confusion matrix")
@@ -311,15 +284,16 @@ def dab(args, trainloader, validloader, testloader,name):
     plt.legend()
     plt.show()
 
-    train_acc = ss.savgol_filter(train_acc, 7, 1)
-    valid_acc = ss.savgol_filter(valid_acc, 7, 1)
-    plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
-    plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
-    plt.title('Training and Validation Accuracy vs. Epoch')
-    plt.xlabel('# Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.show()
+    if 11 < args.epochs:
+        train_acc = ss.savgol_filter(train_acc, 7, 1)
+        valid_acc = ss.savgol_filter(valid_acc, 7, 1)
+        plt.plot(range(len(train_acc)), train_acc, label='Training Accuracy')
+        plt.plot(range(len(valid_acc)), valid_acc, label='Validation Accuracy')
+        plt.title('Training and Validation Accuracy vs. Epoch Filtered Graph')
+        plt.xlabel('# Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+        plt.show()
 
     plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
     plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
@@ -329,15 +303,16 @@ def dab(args, trainloader, validloader, testloader,name):
     plt.legend()
     plt.show()
 
-    train_loss = ss.savgol_filter(train_loss, 7, 1)
-    valid_loss = ss.savgol_filter(valid_loss, 7, 1)
-    plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
-    plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
-    plt.title('Training and Validation Loss vs. Epoch')
-    plt.xlabel('# Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.show()
+    if 11 < args.epochs:
+        train_loss = ss.savgol_filter(train_loss, 11, 1)
+        valid_loss = ss.savgol_filter(valid_loss, 11, 1)
+        plt.plot(range(len(train_loss)), train_loss, label='Training Loss')
+        plt.plot(range(len(valid_loss)), valid_loss, label='Validation Loss')
+        plt.title('Training and Validation Loss vs. Epoch Filtered Graph')
+        plt.xlabel('# Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
     return out
 
 if __name__ == '__main__':
@@ -376,8 +351,12 @@ if __name__ == '__main__':
         args.classes = np.array([0, 1])
 
     """"""
-    # input = [[128,32,64],[0.001,0.0005,0.003]]
-    input = [[32],[0.003,0.005,0.001,0.002]]
+    """"**********************INPUTS: change grid search parameters here:****************************"""
+    batch_size_params = [16,32,64]
+    lr_params = [0.001,0.002,0.003,0.005]
+    dropout_params = [0.1,0.2,0.3]
+    input = [batch_size_params, lr_params, dropout_params]
+    """**********************************************************************************************"""
     main(args,input)
 
 

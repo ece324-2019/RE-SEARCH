@@ -6,6 +6,17 @@ import sys
 sys.path.insert(1, 'demo/customer_helpers')
 from customer_helpers import *
 
+""" This file searches the database with your input string and stores the results in an output folder"""
+"""******************************How to use this file*****************************************************************************"""
+# To search database: do_action = 'search', search_terms = 'INPUT HERE YOUR SEARCH STRING AS 1 ELEMENT (ex. 'black tops turtleneck')
+                                          #output_folder = 'WHERE YOU WANT THE IMAGES FOUND FROM THE SEARCH TO BE STORED'
+# To clear your output folder: do_action = "clear outputs"
+"""*******************************make sure to fill out these parameters *********************************************************"""
+do_action = 'blah'
+searchterms = 'blah'
+output_folder = 'blah'
+"""*******************************************************************************************************************************"""
+
 data_folder = './finaltest'
 def clear_folder(data_folder):
     names = [data_folder + '/' + f for f in listdir(data_folder) if isfile(join(data_folder, f))]
@@ -34,7 +45,14 @@ def search(L):
 # delete()
 # print(store(data_folder))
 
+def main(do_action, searchterms,output_folder):
+    for action in do_action:
+        if action == 'search':
+            search(searchterms.split())
+        elif action == 'clear outputs':
+            clear_folder(output_folder)
 
+main(do_action,searchterms, output_folder)
 
 
 

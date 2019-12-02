@@ -1,4 +1,7 @@
 import pyodbc
+""" This file contains the helper functions reqired to generate queries to search the database with specified parameters inputted from customer.py"""
+""" Server = 'YOUR LOCAL DATABASE SERVER', Database = 'THE NAME OF YOUR LOCAL DATABASE', table = 'THE NAME OF THE TABLE IN YOUR LOCAL DATABASE' """
+
 table = "classifier.dbo.classified_tops"
 conn = pyodbc.connect('Driver={SQL Server};'
                           'Server=DESKTOP-SG3RI9Q;'
@@ -11,8 +14,6 @@ def get_things(L):
     if not givelist:
         return []
     query = "SELECT TOP 10 UUID,path_to_file FROM classifier.dbo.classified_tops WHERE " + " AND ".join(givelist) + " ORDER BY " + giveparams +" DESC"
-    # query = "SELECT TOP 5 UUID,path FROM test.dbo.classified_tops ORDER BY color_cert DESC"
-    # print(query)
     cursor.execute(query)
 
     out = []

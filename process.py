@@ -7,11 +7,15 @@ from integrate import integration
 from os import listdir
 from os.path import isfile, join
 
-# first process all the photos in the database
+""" This files takes all the images in a folder, runs them through our model and then stores the results in a local database"""
+"""******************************How to use this file*****************************************************************************"""
+# To populate database: do_action = 'store, data_folder = 'THE LOCATION OF THE IMAGES YOU WANT TO CLASSIFY AND STORE INTO THE DATABASE'
+# To clear the database: do_action = 'clear database'
+"""*******************************make sure to fill out these parameters *********************************************************"""
+do_action = 'blah'
+data_folder = 'blah'
+"""*******************************************************************************************************************************"""
 
-# run it through the model
-
-data_folder = './finaltest'
 def clear_folder(data_folder):
     names = [data_folder + '/' + f for f in listdir(data_folder) if isfile(join(data_folder, f))]
     print(names)
@@ -30,19 +34,15 @@ def store(data_folder):
     out_b = integration(data_folder, 'buttons')
 
     addparams = ['UUID','color','color_confidence','neckline','neckline_confidence','sleeves','sleeves_confidence','buttons','buttons_confidence','path_to_file']
-    # print(out_c)
     for i in range(0,len(out_c)):
-        # print(uuid.uuid4())
-        # addlist = [[str(uuid.uuid4())[0:9], str(out_c[i][0]), str(out_c[i][1]),'NULL','0',str(out_s[i][0]), str(out_s[i][1]),'NULL','0',str(names[i])]]
-        # addlist = [[str(uuid.uuid4())[0:9], str(out_c[i][0]), str(out_c[i][1]), 'NULL', 'NULL',
-        #             'NULL', 'NULL', 'NULL', 'NULL', str(names[i])]]
-        # print(out_c[i], out_n[i], out_b[i], out_s[i])
         addlist = [[str(uuid.uuid4()),str(out_c[i][0]),str(out_c[i][1]),str(out_n[i][0]),str(out_n[i][1]),str(out_s[i][0]),str(out_s[i][1]),str(out_b[i][0]),str(out_b[i][1]),str(names[i])]]
         write(addparams, addlist)
-        # print(addlist)
 
+def main(do_action, data_folder):
+    for action in do_action:
+        if action == 'store':
+            store(data_folder)
+        elif action == 'clear database':
+            delete()
 
-delete()
-print(store(data_folder))
-# clear_folder('../output_images')
-# search(['green'])
+main(do_action, data_folder)
